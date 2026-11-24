@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html data-page-node-id="PMm4gwBcI5KpZn2WDTwfUT" lang="zh-CN"><head data-page-node-id="JEH6bMDXs6B2NV7Po9FBT3">
+  <meta data-page-node-id="qj5VRNYBnPQZFBP1CrsJNE" charset="UTF-8">
+  <meta data-page-node-id="zeLrzT11PFuLRmCgFdMmJd" name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta data-page-node-id="LfqQgIAjSkHeLzRjFn0XXA" name="description" content="Joby S4 有人驾驶倾转旋翼 eVTOL 深度安全分析：基于系统安全工程的适航基线、危险分析、GSN 安全论证、运行风险与证据边界。">
+  <title data-page-node-id="G4bsWgPVPQRrTkwTPJnCeo" data-pnid-children="motxlmyJSGgm74190TsxTQ">Joby S4 | 深度安全分析</title>
+  <script data-page-node-id="KUiSxa6F7k7aHnybBZD7GB" data-pnid-children="gF90aXvMfGobOPKBEPn7Yl">document.documentElement.classList.add('js');</script>
+  <style data-page-node-id="MaGKGHo8GoMDghX75cLngn" data-pnid-children="k2fMh65eMf5mPOq6RFFhJU">
+    :root {
+      --ink: #0d1b2f;
+      --ink-soft: #2d3f5c;
+      --muted: #6b7b93;
+      --paper: #f5f7fb;
+      --white: #ffffff;
+      --line: #dfe6f0;
+      --blue: #1f5eff;
+      --blue-deep: #123b8f;
+      --cyan: #20bfd0;
+      --amber: #f0a13a;
+      --green: #1aa87a;
+      --red: #d9536b;
+      --shadow: 0 18px 48px rgba(18, 48, 92, 0.09);
+      --shadow-lg: 0 28px 80px rgba(10, 32, 70, 0.16);
+      --radius: 22px;
+      --max: 1180px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", sans-serif;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; }
+    sup a { color: var(--blue); text-decoration: none; font-size: 11px; }
+    sup a:hover { text-decoration: underline; }
+    .wrap { width: min(var(--max), calc(100% - 48px)); margin: 0 auto; }
+
+    /* Header */
+    .site-header {
+      position: fixed; inset: 0 0 auto 0; z-index: 100;
+      background: rgba(7, 22, 46, 0.82);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .header-inner {
+      width: min(var(--max), calc(100% - 48px)); margin: 0 auto;
+      height: 68px; display: flex; align-items: center; justify-content: space-between; gap: 24px;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; color: #fff; text-decoration: none; }
+    .brand-mark {
+      width: 34px; height: 34px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--cyan), var(--blue));
+      display: grid; place-items: center; font-weight: 800; font-size: 13px; letter-spacing: -0.4px;
+    }
+    .brand-text strong { display: block; font-size: 14px; line-height: 1.2; }
+    .brand-text small { display: block; font-size: 10px; letter-spacing: 2px; color: #9fb4d4; margin-top: 3px; }
+    .nav { display: flex; align-items: center; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+    .nav::-webkit-scrollbar { display: none; }
+    .nav a {
+      color: #c7d5ea; text-decoration: none; font-size: 13px; padding: 8px 11px; border-radius: 8px; white-space: nowrap;
+      transition: color .2s, background .2s;
+    }
+    .nav a:hover { color: #fff; background: rgba(255,255,255,.09); }
+    .nav a.prev { color: #7de8f3; border: 1px solid rgba(125,232,243,.3); margin-left: 8px; }
+
+    /* Hero */
+    .hero {
+      position: relative; overflow: hidden; color: #fff; padding: 150px 0 88px;
+      background:
+        radial-gradient(circle at 78% 30%, rgba(32,191,208,.22), transparent 34%),
+        radial-gradient(circle at 12% 82%, rgba(31,94,255,.25), transparent 38%),
+        linear-gradient(135deg, #06152d 0%, #0b2c50 55%, #071b36 100%);
+    }
+    .hero::before {
+      content: ""; position: absolute; inset: 0; opacity: .18; pointer-events: none;
+      background-image: linear-gradient(rgba(255,255,255,.14) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.14) 1px, transparent 1px);
+      background-size: 64px 64px;
+      mask-image: linear-gradient(to bottom, #000, transparent 88%);
+    }
+    .hero-grid { position: relative; display: grid; grid-template-columns: 1.1fr .9fr; gap: 56px; align-items: center; }
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 10px; font-size: 11px; letter-spacing: 2.6px;
+      color: #8fe6ee; text-transform: uppercase; font-weight: 700;
+    }
+    .eyebrow::before { content: ""; width: 28px; height: 2px; background: var(--cyan); }
+    .hero h1 { font-size: clamp(40px, 5.6vw, 74px); line-height: 1.06; margin: 20px 0 22px; letter-spacing: -2px; font-weight: 800; }
+    .hero h1 span { background: linear-gradient(90deg, #7de8f3, #91b6ff); -webkit-background-clip: text; color: transparent; }
+    .hero-lead { font-size: 17px; color: #c8d8ee; max-width: 640px; margin: 0 0 30px; }
+    .hero-tags { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 34px; }
+    .hero-tag {
+      font-size: 12px; padding: 8px 13px; border: 1px solid rgba(255,255,255,.22); border-radius: 999px;
+      background: rgba(255,255,255,.06); color: #dce9fa;
+    }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 9px; padding: 13px 20px; border-radius: 12px;
+      text-decoration: none; font-size: 14px; font-weight: 700; transition: transform .2s, box-shadow .2s, background .2s;
+    }
+    .btn:hover { transform: translateY(-2px); }
+    .btn-primary { background: linear-gradient(135deg, var(--cyan), var(--blue)); color: #fff; box-shadow: 0 12px 30px rgba(31,94,255,.3); }
+    .btn-ghost { border: 1px solid rgba(255,255,255,.28); color: #fff; background: rgba(255,255,255,.04); }
+    .hero-visual { position: relative; min-height: 430px; display: grid; place-items: center; }
+    .radar { width: min(100%, 470px); aspect-ratio: 1; position: relative; }
+    .radar svg { width: 100%; height: 100%; overflow: visible; }
+    .radar-ring { fill: none; stroke: rgba(137,206,255,.22); stroke-width: 1; }
+    .radar-ring.dashed { stroke-dasharray: 5 8; }
+    .radar-sweep { transform-origin: 240px 240px; animation: sweep 9s linear infinite; }
+    @keyframes sweep { to { transform: rotate(360deg); } }
+    .rotor { transform-origin: center; animation: spin 7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .float-label {
+      position: absolute; padding: 9px 13px; border-radius: 11px; font-size: 11px; letter-spacing: .5px;
+      background: rgba(8, 26, 52, .78); border: 1px solid rgba(125,214,239,.28); color: #cfeaff;
+      backdrop-filter: blur(8px);
+    }
+    .float-label b { color: #7de8f3; font-size: 14px; }
+    .fl-1 { top: 8%; right: 2%; }
+    .fl-2 { bottom: 14%; left: -3%; }
+    .fl-3 { bottom: 2%; right: 12%; }
+
+    .hero-stats {
+      position: relative; margin-top: 62px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+    }
+    .hero-stat {
+      padding: 20px 22px; border-radius: 16px; background: rgba(255,255,255,.065);
+      border: 1px solid rgba(255,255,255,.12); backdrop-filter: blur(10px);
+    }
+    .hero-stat .num { font-size: 28px; font-weight: 800; letter-spacing: -1px; color: #fff; }
+    .hero-stat .num small { font-size: 13px; font-weight: 600; color: #9ddbe8; margin-left: 3px; }
+    .hero-stat .lbl { font-size: 12px; color: #a9bdd7; margin-top: 4px; }
+
+    /* Sections */
+    section { padding: 92px 0; }
+    .section-head { margin-bottom: 42px; max-width: 780px; }
+    .section-no { font-size: 11px; letter-spacing: 3px; color: var(--blue); font-weight: 800; }
+    .section-head h2 { font-size: clamp(30px, 4vw, 46px); line-height: 1.2; margin: 10px 0 14px; letter-spacing: -1px; }
+    .section-head p { color: var(--muted); font-size: 15px; margin: 0; }
+    .card { background: var(--white); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+
+    /* Findings */
+    .findings { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+    .finding { padding: 26px 24px 24px; position: relative; overflow: hidden; }
+    .finding::after { content: ""; position: absolute; width: 90px; height: 90px; border-radius: 50%; right: -38px; top: -38px; background: rgba(31,94,255,.07); }
+    .finding .idx { font-size: 11px; letter-spacing: 2px; color: var(--blue); font-weight: 800; }
+    .finding h3 { font-size: 17px; margin: 12px 0 10px; }
+    .finding p { font-size: 13px; color: var(--muted); margin: 0; }
+    .finding .verdict { margin-top: 16px; font-size: 12px; font-weight: 700; color: var(--ink-soft); display: flex; align-items: center; gap: 8px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 4px rgba(26,168,122,.12); }
+    .dot.warn { background: var(--amber); box-shadow: 0 0 0 4px rgba(240,161,58,.14); }
+    .dot.risk { background: var(--red); box-shadow: 0 0 0 4px rgba(217,83,107,.13); }
+
+    /* GSN / branches */
+    .gsn { display: grid; gap: 18px; }
+    .gsn-goal { padding: 24px 28px; border-radius: 18px; background: linear-gradient(135deg, #0b2142, #123d76); color: #fff; box-shadow: var(--shadow-lg); }
+    .gsn-goal .eyebrow { color: #8fe6ee; }
+    .gsn-goal h3 { margin: 10px 0 6px; font-size: 20px; }
+    .gsn-goal p { margin: 0; color: #c6d7ee; font-size: 13px; }
+    .gsn-branches { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .branch { padding: 22px; position: relative; }
+    .branch::before { content: ""; position: absolute; left: 50%; top: -18px; width: 1px; height: 18px; background: #b9cde8; }
+    .branch .bno { font-size: 10px; letter-spacing: 2px; color: var(--blue); font-weight: 800; }
+    .branch h4 { margin: 8px 0 8px; font-size: 15px; }
+    .branch p { margin: 0; font-size: 12.5px; color: var(--muted); }
+    .branch .ev { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line); font-size: 11.5px; color: var(--ink-soft); }
+    .branch .ev b { color: var(--blue); }
+
+    /* Baseline */
+    .baseline-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+    .baseline-card { padding: 28px; }
+    .baseline-card h3 { margin: 0 0 8px; font-size: 19px; }
+    .baseline-card > p { margin: 0 0 22px; font-size: 12.5px; color: var(--muted); }
+    .compare-rows { display: grid; gap: 12px; }
+    .compare-row { display: grid; grid-template-columns: 92px 1fr; gap: 14px; align-items: start; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+    .compare-row:last-child { border-bottom: 0; }
+    .compare-row .k { font-size: 12px; font-weight: 800; color: var(--ink-soft); }
+    .compare-row .v { font-size: 12.5px; color: var(--muted); }
+    .big-metric { display: flex; align-items: baseline; gap: 12px; margin-bottom: 18px; }
+    .big-metric strong { font-size: 38px; letter-spacing: -2px; color: var(--blue); }
+    .big-metric span { font-size: 12px; color: var(--muted); }
+    .pill-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+    .pill { display: inline-block; padding: 5px 9px; border-radius: 7px; font-size: 10.5px; font-weight: 700; background: #eaf1ff; color: #2450b8; }
+    .pill.green { background: #e7f7f1; color: #12805d; }
+    .pill.amber { background: #fff4e2; color: #9c6718; }
+
+    /* Hazard table */
+    .hazard-card { padding: 28px; overflow-x: auto; }
+    .hazard-card h3 { margin: 0 0 6px; font-size: 19px; }
+    .hazard-card > p { margin: 0 0 20px; font-size: 12.5px; color: var(--muted); }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 760px; }
+    th, td { text-align: left; padding: 12px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { font-size: 10px; letter-spacing: 1px; color: var(--muted); text-transform: uppercase; background: #f8fafd; }
+    td strong { font-size: 12.5px; }
+    .level { display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; }
+    .level.low { background: #e7f7f1; color: #12805d; }
+    .level.mid { background: #fff4e2; color: #9c6718; }
+    .level.high { background: #fdecef; color: #a8324a; }
+
+    /* Matrix */
+    .matrix-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+    .matrix-card { padding: 28px; }
+    .matrix-card h3 { margin: 0 0 6px; font-size: 19px; }
+    .matrix-card > p { margin: 0 0 20px; font-size: 12.5px; color: var(--muted); }
+    .matrix { display: grid; grid-template-columns: 64px repeat(5, 1fr); gap: 5px; }
+    .matrix .axis { font-size: 10px; color: var(--muted); display: grid; place-items: center; text-align: center; }
+    .cell { aspect-ratio: 1.55; border-radius: 8px; display: grid; place-items: center; font-size: 10px; font-weight: 700; color: #425573; }
+    .cell.low { background: #e7f7f1; }
+    .cell.mid { background: #fff2d9; }
+    .cell.high { background: #fdecef; }
+    .matrix-legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 14px; font-size: 11px; color: var(--muted); }
+    .matrix-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; }
+    .matrix-list { display: grid; gap: 10px; }
+    .risk-item { padding: 14px 16px; border-radius: 12px; border: 1px solid var(--line); background: #fbfdff; }
+    .risk-item strong { display: block; font-size: 13px; }
+    .risk-item span { font-size: 11.5px; color: var(--muted); }
+
+    /* Process */
+    .process-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .step { padding: 22px; position: relative; }
+    .step .n { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: #eaf1ff; color: var(--blue); font-weight: 800; font-size: 13px; margin-bottom: 12px; }
+    .step h4 { margin: 0 0 8px; font-size: 14px; }
+    .step p { margin: 0; font-size: 12px; color: var(--muted); }
+    .step .tag { margin-top: 12px; font-size: 10.5px; color: var(--blue); font-weight: 700; }
+    .method-strip { margin-top: 18px; padding: 20px 24px; border-radius: 16px; background: #eef3fb; font-size: 12px; color: var(--ink-soft); }
+    .method-strip b { color: var(--blue); }
+
+    /* Timeline */
+    .timeline { position: relative; margin-left: 8px; }
+    .timeline::before { content: ""; position: absolute; left: 9px; top: 8px; bottom: 8px; width: 2px; background: linear-gradient(var(--blue), var(--cyan)); opacity: .35; }
+    .tl-item { position: relative; padding-left: 42px; padding-bottom: 26px; }
+    .tl-item::before { content: ""; position: absolute; left: 2px; top: 8px; width: 16px; height: 16px; border-radius: 50%; background: #fff; border: 4px solid var(--blue); box-shadow: 0 0 0 5px rgba(31,94,255,.1); }
+    .tl-item.accent::before { border-color: var(--amber); box-shadow: 0 0 0 5px rgba(240,161,58,.13); }
+    .tl-date { font-size: 11px; letter-spacing: 1.5px; font-weight: 800; color: var(--blue); }
+    .tl-body { margin-top: 8px; padding: 20px 22px; border-radius: 16px; background: #fff; border: 1px solid var(--line); box-shadow: 0 10px 30px rgba(20,52,96,.05); }
+    .tl-body h3 { margin: 0 0 6px; font-size: 16px; }
+    .tl-body p { margin: 0; font-size: 13px; color: var(--muted); }
+
+    /* Evidence / recs */
+    .evidence-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+    .evidence-card { padding: 28px; }
+    .evidence-card h3 { margin: 0 0 14px; font-size: 18px; }
+    .evidence-card ul { margin: 0; padding-left: 18px; font-size: 12.5px; color: var(--muted); }
+    .evidence-card li { margin-bottom: 9px; }
+    .evidence-card.known h3 { color: var(--green); }
+    .evidence-card.unknown h3 { color: var(--amber); }
+    .rec-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 22px; }
+    .rec { padding: 22px; }
+    .rec .rn { font-size: 11px; letter-spacing: 2px; color: var(--blue); font-weight: 800; }
+    .rec h4 { margin: 8px 0 8px; font-size: 14px; }
+    .rec p { margin: 0; font-size: 12px; color: var(--muted); }
+
+    /* Verdict */
+    .verdict-block { padding: 40px; background: linear-gradient(135deg, #0b2142, #123d76); color: #fff; border: 0; box-shadow: var(--shadow-lg); }
+    .verdict-block .eyebrow { color: #8fe6ee; }
+    .verdict-block h2 { font-size: clamp(28px, 3.6vw, 42px); line-height: 1.25; margin: 16px 0 14px; letter-spacing: -1px; }
+    .verdict-block > p { color: #c6d7ee; max-width: 860px; font-size: 14px; margin: 0; }
+    .score-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-top: 34px; }
+    .score { padding: 20px; border-radius: 15px; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12); }
+    .score .head { display: flex; justify-content: space-between; font-size: 12px; color: #cfe0f6; }
+    .score .head b { color: #7de8f3; font-size: 15px; }
+    .bar { height: 6px; border-radius: 999px; background: #edf1f7; overflow: hidden; }
+    .score .bar { background: rgba(255,255,255,.14); margin-top: 12px; }
+    .score .bar i, .bar i { display: block; height: 100%; border-radius: inherit; }
+    .score .bar i { background: linear-gradient(90deg, var(--cyan), #7de8f3); }
+
+    /* Sources */
+    .sources { padding-top: 20px; }
+    .source-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 28px; counter-reset: src; padding: 0; list-style: none; }
+    .source-list li { position: relative; padding: 10px 0 10px 34px; border-bottom: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+    .source-list li::before { counter-increment: src; content: "[" counter(src) "]"; position: absolute; left: 0; color: var(--blue); font-weight: 800; font-size: 11px; }
+    .source-list a { color: var(--ink-soft); text-decoration: none; border-bottom: 1px solid #b9cbe6; word-break: break-all; }
+    .source-list a:hover { color: var(--blue); }
+    .disclaimer { margin-top: 26px; padding: 18px 20px; background: #eef3fb; border-radius: 14px; font-size: 12px; color: var(--ink-soft); }
+
+    footer { background: #08172e; color: #8fa5c2; padding: 28px 0; font-size: 12px; }
+    .footer-inner { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+
+    .top-btn {
+      position: fixed; right: 22px; bottom: 22px; z-index: 90; width: 42px; height: 42px; border-radius: 12px;
+      background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow); color: var(--blue);
+      display: grid; place-items: center; cursor: pointer; opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s;
+    }
+    .top-btn.show { opacity: 1; pointer-events: auto; }
+    .top-btn:hover { transform: translateY(-3px); }
+
+    .js .reveal { opacity: 0; transform: translateY(20px); transition: opacity .7s ease, transform .7s ease; }
+    .js .reveal.in { opacity: 1; transform: none; }
+
+    @media (max-width: 980px) {
+      .hero-grid { grid-template-columns: 1fr; gap: 10px; }
+      .hero-visual { min-height: 360px; }
+      .hero-stats { grid-template-columns: repeat(2, 1fr); }
+      .findings, .gsn-branches, .process-grid, .rec-grid, .score-grid { grid-template-columns: repeat(2, 1fr); }
+      .baseline-grid, .matrix-grid, .evidence-grid { grid-template-columns: 1fr; }
+      .source-list { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      .wrap, .header-inner { width: calc(100% - 32px); }
+      .site-header { position: static; }
+      .nav { padding-bottom: 10px; }
+      .hero { padding: 56px 0 62px; }
+      .hero h1 { font-size: 40px; letter-spacing: -1px; }
+      .hero-stats { margin-top: 38px; grid-template-columns: 1fr 1fr; gap: 10px; }
+      .hero-stat { padding: 15px; }
+      .hero-stat .num { font-size: 22px; }
+      section { padding: 64px 0; }
+      .findings, .gsn-branches, .process-grid, .rec-grid, .score-grid { grid-template-columns: 1fr; }
+      .verdict-block { padding: 28px 22px; }
+      .float-label { font-size: 9px; padding: 6px 9px; }
+      .fl-2 { left: 0; }
+      .matrix { grid-template-columns: 48px repeat(5, 1fr); gap: 3px; }
+      .cell { font-size: 8px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .radar-sweep, .rotor { animation: none; }
+      .js .reveal { opacity: 1; transform: none; transition: none; }
+    }
+  </style>
+</head>
+<body data-page-node-id="wXnlKu6EOIhqg0xUl2FPgZ">
+  <header data-page-node-id="wAipD1WTFe3FYMZ7VXfYFq" class="site-header">
+    <div data-page-node-id="DHIyxjPGzhIP4NUVu9Pg4a" class="header-inner">
+      <a data-page-node-id="tmaNtXDoUgkeESWJ1DlnJ9" class="brand" href="#top">
+        <span data-page-node-id="2X7eZ31zaQSnlv2Wy1nUZe" class="brand-mark">S4</span>
+        <span data-page-node-id="5Bb1YUNNMaGPfNs0UZWFSm" class="brand-text"><strong data-page-node-id="AYIYvPiVEO9mfG5VEwKVr6">Joby S4 深度安全分析</strong><small data-page-node-id="1rS85gB5zgjgFaOr48IuRt">ASSIGNMENT 2 · SYSTEM SAFETY ENGINEERING</small></span>
+      </a>
+      <nav data-page-node-id="77ZefLmDS6521DGanXbA9Y" class="nav" aria-label="页面导航">
+        <a data-page-node-id="TsRD3DySNhXnTCxuwizJjF" href="#summary">核心结论</a>
+        <a data-page-node-id="MBuXQ9BKNthG4oigWxO2C3" href="#safetycase">安全论证</a>
+        <a data-page-node-id="ndVa0Hf5T1YrBIX6RVMOjY" href="#baseline">适航基线</a>
+        <a data-page-node-id="cSZPXVYJriGDwhCXmv8iD5" href="#hazard">危险分析</a>
+        <a data-page-node-id="4cuvSVA1M61zo7eOHYbgy3" href="#process">工程方法</a>
+        
+        
+        
+        
+        
+        
+      </nav>
+    </div>
+  </header>
+
+  <main data-page-node-id="YezpgxiiNrjUym2lgLT6bB" id="top">
+    <section data-page-node-id="5nGAe0bjngOe9QrolN0aYr" class="hero">
+      <div data-page-node-id="IyvZBa0rW4dm8o0ebMQpc9" class="wrap hero-grid">
+        <div data-page-node-id="TJxjKIouwJJ5y44EZvrjwa">
+          <div data-page-node-id="7ksl8A5uBNbolPWcoTAYkN" class="eyebrow">课程作业 2 · 飞行汽车技术基础</div>
+          <h1 data-page-node-id="1Ift3M3Ed7gRGDfbgfK2Uj">Joby S4 <span data-page-node-id="vzpx9bLrnulnCcxcthpX88">深度安全分析</span></h1>
+          <p data-page-node-id="U7DfuijBBqrUrONSsChGKD" class="hero-lead">以系统安全工程为框架，审视 Joby S4 有人驾驶倾转旋翼 eVTOL 的冗余架构、动力升力适航审定、试飞验证、有人驾驶运行控制与残余风险：安全不是一项进度百分比，而是一条必须由证据持续支撑的论证链。</p>
+          <div data-page-node-id="9qC3PnfGn6gI0k6Jg9NS0R" class="hero-tags">
+            <span data-page-node-id="olGzO8yURiViLA8h4ugMsI" class="hero-tag">系统安全工程 SSE</span>
+            <span data-page-node-id="DlXrzDpZV3pw7GZSQawsTl" class="hero-tag">GSN / FHA / FTA / STPA / FMEA</span>
+            <span data-page-node-id="aCe9TT8zrQpI8H6VFO5trc" class="hero-tag">数据截至 2026-11-23</span>
+          </div>
+          <div data-page-node-id="SuGLQ3ALWygXaov7TaZzoG" class="hero-actions">
+            <a data-page-node-id="KJ4mabex5PmXGhbDaXBECw" class="btn btn-primary" href="#safetycase">查看安全论证链 →</a>
+            <a data-page-node-id="B2G80zqvq3qzHeEhv0gKtn" class="btn btn-ghost" href="assignment3.html">返回第三次作业（全方位调研）</a>
+          </div>
+        </div>
+        <div data-page-node-id="kfiH4BDJYyf2Nyudz4x1PG" class="hero-visual" aria-label="Joby S4 安全冗余构型示意图">
+          <div data-page-node-id="cPHHnUDoZqeSZKMvXiXCa5" class="radar">
+            <svg data-page-node-id="cDHEx2WJOLOlly0EXRC0WQ" viewBox="0 0 480 480" role="img" aria-label="Joby S4 六旋翼倾转、四电池包与三余度飞控安全防线示意">
+              <defs data-page-node-id="1mVWm90yxYIBPEH7E149Uw">
+                <linearGradient data-page-node-id="CcyECyHbA1j3yYgNOSqdSe" id="bodyGrad" x1="0" y1="0" x2="1" y2="1">
+                  <stop data-page-node-id="Mo9b4KSXeeu3BhSeLvXCoA" offset="0" stop-color="#8fe6f3"></stop><stop data-page-node-id="Fz97a6Dd96B8NClV0Ya7v2" offset="1" stop-color="#2a6cff"></stop>
+                </linearGradient>
+                <linearGradient data-page-node-id="ARmoA91jfHtnNtYrWZiTJO" id="sweepGrad" x1="0" y1="0" x2="1" y2="0">
+                  <stop data-page-node-id="DyT7NtgRQnD1DyBd8Dgm76" offset="0" stop-color="#20bfd0" stop-opacity="0"></stop><stop data-page-node-id="r08fuRQzH97hgso4xLfLOZ" offset="1" stop-color="#7de8f3" stop-opacity=".42"></stop>
+                </linearGradient>
+              </defs>
+              <circle data-page-node-id="WiMm7FUj1ZBdLCPrkTFrmJ" cx="240" cy="240" r="205" class="radar-ring"></circle>
+              <circle data-page-node-id="h0YG8jdFuFg7L6ZOnaYKG6" cx="240" cy="240" r="160" class="radar-ring dashed"></circle>
+              <circle data-page-node-id="VpoprANO4ksvYwGyjY5zX2" cx="240" cy="240" r="112" class="radar-ring"></circle>
+              <circle data-page-node-id="akr0fIPxE2a6APSymNVTxH" cx="240" cy="240" r="58" class="radar-ring dashed"></circle>
+              <g data-page-node-id="3dqTrMZgZSGi7RN0w9ZGpo" class="radar-sweep">
+                <path data-page-node-id="3PIrPMtFWo8Wa0qXBBLo2Y" d="M240 240 L240 35 A205 205 0 0 1 385 96 Z" fill="url(#sweepGrad)"></path>
+                <line data-page-node-id="Gin9Ik258ubD4aGcHtKp24" x1="240" y1="240" x2="240" y2="35" stroke="#7de8f3" stroke-opacity=".55"></line>
+              </g>
+              <path data-page-node-id="Dz4V3zeyFFAVG5oeWosnqZ" d="M78 248 L402 248" stroke="#9fd0ff" stroke-width="16" stroke-linecap="round" opacity=".85"></path>
+              <path data-page-node-id="i1e6JtNEPMm8eWHkFBnEd9" d="M78 248 L402 248" stroke="#e5f6ff" stroke-width="3" stroke-linecap="round" opacity=".9"></path>
+              <g data-page-node-id="kEH85lfTiOcVL9mtCW0GT4" stroke="#8fc6ff" stroke-width="3" stroke-linecap="round" opacity=".98">
+                <g data-page-node-id="baiusi4FzqBGJCZ9iB3MuE" id="tilt"><g data-page-node-id="a2k34Hhb8TD47IqNQTAEms" class="rotor"><ellipse data-page-node-id="P4db7t2HZRxLrZlDHsl4ZA" cx="120" cy="232" rx="26" ry="6" fill="none"></ellipse><ellipse data-page-node-id="agJzGhnHW3kkUaFgrEDzHh" cx="120" cy="226" rx="26" ry="6" fill="none"></ellipse></g></g>
+                <use data-page-node-id="qvTRICrSSWvpbaZ0cYU83x" href="#tilt" transform="translate(240,0)"></use>
+                <use data-page-node-id="dAtoXIIJlnN28rSEUpnKsc" href="#tilt" transform="translate(0,-4) translate(360,0)"></use>
+              </g>
+              <g data-page-node-id="taa7uoKly8G1qrLMb2Y6dk" stroke="#8fc6ff" stroke-width="3" stroke-linecap="round" opacity=".7">
+                <g data-page-node-id="xqonVlunD05OlOArLGWVrF" id="tilt2"><g data-page-node-id="EM82tHmW56fhzCbcMywd8e" class="rotor"><ellipse data-page-node-id="Pitqnx3C8NRwfO71sGvWjr" cx="160" cy="316" rx="22" ry="5" fill="none"></ellipse><ellipse data-page-node-id="nglImcAIbKc0HBlQsfDR92" cx="160" cy="311" rx="22" ry="5" fill="none"></ellipse></g></g>
+                <use data-page-node-id="TykOMAjEBOzDynbgLm68kJ" href="#tilt2" transform="translate(160,0)"></use>
+              </g>
+              <path data-page-node-id="laAEaI5IACmTQHBnAbkQbJ" d="M240 200 L240 320" stroke="#8fc6ff" stroke-width="12" stroke-linecap="round" opacity=".8"></path>
+              <ellipse data-page-node-id="CMiiXkNMVvui7lYXGvMX3V" cx="240" cy="238" rx="44" ry="46" fill="url(#bodyGrad)" opacity=".96"></ellipse>
+              <ellipse data-page-node-id="EUBNicV19DyQLCjmX29f2C" cx="240" cy="232" rx="27" ry="28" fill="#0b2142" opacity=".7"></ellipse>
+              <path data-page-node-id="CKJkl0dusgP1q52TU6iWzs" d="M220 250 Q240 268 260 250" stroke="#d9f6ff" stroke-width="3" fill="none" opacity=".85"></path>
+              <circle data-page-node-id="pad1hEXlR12DDQrTWG9Ys2" cx="240" cy="240" r="4" fill="#fff"></circle>
+              <text data-page-node-id="g1VMWUJEjDs9o35FkUSWNZ" x="240" y="372" text-anchor="middle" fill="#a9c9e8" font-size="12">三余度飞控 · 四电池包故障隔离 · 有人驾驶</text>
+            </svg>
+          </div>
+          <div data-page-node-id="h5IzDCLSDSEF8RNdZBJLbY" class="float-label fl-1"><b data-page-node-id="qsndhDX7XfZsCnKDLQQ8Zb">10⁻⁹</b> 航空安全目标量级</div>
+          <div data-page-node-id="gdFISRWJfmIZbd5s59Mq8b" class="float-label fl-2"><b data-page-node-id="Om8qHH0BXD3zalUyIVmX4N">3</b> 余度飞控计算机</div>
+          <div data-page-node-id="0RPfE0FNuAR6VMsy4bUM3n" class="float-label fl-3"><b data-page-node-id="UK09vcUU3YbvzUTjPEa4co">6</b> 双绕组推进电机</div>
+        </div>
+      </div>
+      <div data-page-node-id="Sc4zEpfPy6LIUVejKHsOBg" class="wrap hero-stats">
+        <div data-page-node-id="2Y9yKl2FfwIoRWMIxUn0Di" class="hero-stat"><div data-page-node-id="3AbxNOXK9eX0A0ZpEOiH7R" class="num">10<sup data-page-node-id="c97EVncJUZ8fYoDy8lYu6N">-9</sup></div><div data-page-node-id="E6OMJPXYB80CtjGW8eImTj" class="lbl">航空级事故概率目标量级（课程资料）<sup data-page-node-id="RODHHO6PY0QuPkPuWB9o1K"><a data-page-node-id="oNGgcNJnwUr860BjiFTubT" href="#src-8">[8]</a></sup></div></div>
+        <div data-page-node-id="vSukLzlf0qA9fnAjYBU7AX" class="hero-stat"><div data-page-node-id="y0Vygl0ZFCu82P2v5eRZ5Z" class="num">2,000<small data-page-node-id="o9nH518PnjT82OHwKqkrbk">+ h</small></div><div data-page-node-id="EGtK28QfBtdFAVokzFVCEW" class="lbl">累计试飞小时（第三方报道，2026-11）<sup data-page-node-id="H7mHlNLf9IMHJ89gj1pooT"><a data-page-node-id="P5jz9c5HpWCtqcmPnCYVTe" href="#src-7">[7]</a></sup></div></div>
+        <div data-page-node-id="S3XEjzWraMqo8DbqP0ANUQ" class="hero-stat"><div data-page-node-id="P07UW8OLueFH1nlaGMuWRN" class="num">50,000<small data-page-node-id="7c1ac36tQ5wJnm7tvUNBSr">+ mi</small></div><div data-page-node-id="GAKogQz19ykfHlp5e57aGh" class="lbl">机队累计试飞里程（官方，2026-02）<sup data-page-node-id="25EWNRPhS3wntWeMRd2u0h"><a data-page-node-id="DpPZpGc1sbj0NAtb01yFP2" href="#src-6">[6]</a></sup></div></div>
+        <div data-page-node-id="bApDbUDtL7svhKGhz99UO6" class="hero-stat"><div data-page-node-id="IRsUrBxYiHN3ljvEgxjhOd" class="num">20<small data-page-node-id="TOrI1UsRLgL7JdhT53AuHg">/10%</small></div><div data-page-node-id="FsDOPUcuVeXvfdHQHFeH0V" class="lbl">FAA 第 5 阶段 Joby/FAA 完成度<sup data-page-node-id="1yqJr91TkEf5pTcZHDtTER"><a data-page-node-id="BinHdLMnQdKHPHpo7re2Rc" href="#src-3">[3]</a></sup></div></div>
+      </div>
+    </section>
+
+    <section data-page-node-id="7gDuZxLAwAyjMN3booQBCx" id="summary">
+      <div data-page-node-id="SodumRGVv5RdtuPIhhNNDd" class="wrap">
+        <div data-page-node-id="CkVhWVIwlAcUHosfK9XHdo" class="section-head reveal">
+          <div data-page-node-id="GxD6tDQuLzPmNZX4S0RCtU" class="section-no">01 / EXECUTIVE SUMMARY</div>
+          <h2 data-page-node-id="VGWUTNipc1eStfhNnx4BSk">四个判断：安全设计很强，<br data-page-node-id="ymF8Cpe3YUlClLOsCQgVEm">但运行安全论证尚未闭合</h2>
+          <p data-page-node-id="0mFl96Z2ZDYwfeXLE5N3Yx">课程资料指出，航空级安全要求远高于地面交通：单机事故即重大公共风险，事故概率目标可达 10⁻⁹ 量级；新能源汽车三电技术同源度约 70%，无人机飞控/航电经验迁移率仅约 20%—30%，因此必须按航空适航体系进行系统级重构<sup data-page-node-id="qyjxhlspwJwFrJ373paP45"><a data-page-node-id="CWbWAw4ZTzk4PAQ27hGWK6" href="#src-8">[8]</a></sup><sup data-page-node-id="z6eFswKRyye4udf1H9qxnF"><a data-page-node-id="xcVBfCUoAFd8sEWtDZRq4i" href="#src-9">[9]</a></sup>。Joby S4 走的是有人驾驶 + 动力升力专用条件的路径。</p>
+        </div>
+        <div data-page-node-id="Gn4A9KCl4Nrp2JiZzn3WZu" class="findings">
+          <article data-page-node-id="5slXrC7qpL1tSm95VKa3n5" class="card finding reveal">
+            <div data-page-node-id="olgajPoDg1BXAHFhkF77cd" class="idx">FINDING 01</div>
+            <h3 data-page-node-id="saItKWEiHCHlu1UO5oMRnC">设计冗余：按航空级构建</h3>
+            <p data-page-node-id="WfXqFFOMv3HGSikUIifxrR">六台双绕组推进电机、四个独立电池包（具备故障隔离）、三余度飞控计算机与双套关键作动系统；动力、飞控与电子系统全冗余<sup data-page-node-id="VDwbdVAlHXNFIyTuikZNSG"><a data-page-node-id="zC7zSBJrbZPBKNPywyzoLn" href="#src-1">[1]</a></sup><sup data-page-node-id="MBH313QbD3DabISE1mgVms"><a data-page-node-id="U2xRZlvgHBBv6Nv4bxLWFx" href="#src-2">[2]</a></sup>。</p>
+            <div data-page-node-id="R7BghZDomwfI7g5M76ANFl" class="verdict"><span data-page-node-id="msmeJSNBpttVpnrugfYdDk" class="dot"></span>架构层体现航空级冗余思想</div>
+          </article>
+          <article data-page-node-id="Q5E9F8t19wHOvaQGje4AYP" class="card finding reveal">
+            <div data-page-node-id="G4PP2TOJ50e5Jj4RSmW7Z2" class="idx">FINDING 02</div>
+            <h3 data-page-node-id="Lr4bhGcoU7vSH1mM5XhknZ">验证强度：试飞量行业领先</h3>
+            <p data-page-node-id="25rAhU1Vzxq7wGSQY5QFmO">官方称累计试飞超 50,000 英里，第三方报道累计试飞超 2,000 小时；第 4 阶段测试与分析 Joby 侧与 FAA 侧均 100% 完成并获认可<sup data-page-node-id="NUrBynJTA58AJgD5v1Onho"><a data-page-node-id="BlcdeLL7BRp7KFaVo3yS60" href="#src-6">[6]</a></sup><sup data-page-node-id="ra1J1zFPEAkh01fIGPAItB"><a data-page-node-id="3tfewnPtBUYGmEidnwGl5g" href="#src-7">[7]</a></sup><sup data-page-node-id="ucGZsriiR8BWBZBoIabQ4j"><a data-page-node-id="BAacEnw400aH9BCoY7pQgY" href="#src-3">[3]</a></sup>。</p>
+            <div data-page-node-id="HbjAwDAZfsMV1NCAPVdtIP" class="verdict"><span data-page-node-id="H5RGwPylAncYA1UQwszu5U" class="dot"></span>型号设计安全有较充分试飞支撑</div>
+          </article>
+          <article data-page-node-id="vpAqj1PgrMvqxv0GqGU4gQ" class="card finding reveal">
+            <div data-page-node-id="ZjSieJlBhN74ULehVCn3Lm" class="idx">FINDING 03</div>
+            <h3 data-page-node-id="pHUBHlYyjSTBhn97Bv5uYt">运行边界：取证与培训未完成</h3>
+            <p data-page-node-id="6J5jGB0HGw2rrSKCZZqSY0">型号合格证尚未颁发，第 5 阶段 Joby 侧 20%、FAA 侧 10%；首批载客通过迪拜与 eIPP 试点，并非 TC 完成；有人驾驶仍需新型别等级与培训体系<sup data-page-node-id="k6aXCJcYlRhvDW2Gmi4qXF"><a data-page-node-id="MXkEeA1oibSGXvck9SIBTV" href="#src-3">[3]</a></sup><sup data-page-node-id="LG7e6flNidTXQiHDA14fZR"><a data-page-node-id="77Na2gA02vlOOMBbgjMYZ4" href="#src-7">[7]</a></sup>。</p>
+            <div data-page-node-id="xLHOCvBn7D4gMvAn73psgS" class="verdict"><span data-page-node-id="WqJmxvvByroTRNQxBAunHk" class="dot warn"></span>尚未证明高密度城市通勤安全</div>
+          </article>
+          <article data-page-node-id="mgBtZNegOHp67QlchPfs0l" class="card finding reveal">
+            <div data-page-node-id="TNGeJ6lYuSq5e4nOHKsMqS" class="idx">FINDING 04</div>
+            <h3 data-page-node-id="ds9ZZsbYHLH35mMOhbTv2D">证据边界：公开资料不足</h3>
+            <p data-page-node-id="0zuGlXD9Uf4gNxs9NZgO9C">公开资料未给出 S4 的失效概率分配、PSSA/SSA 报告、共因失效清单、电机/电池失效统计数据；倾转机构与电机失效后的 Fail-Safe 逻辑仅在第三方报道中被概括描述<sup data-page-node-id="0EyiQk8GabgSAr7raEVQWv"><a data-page-node-id="FFX14iQDdmhV2tELpDCKxE" href="#src-7">[7]</a></sup><sup data-page-node-id="8kH1owZfA4uP051mGssdM0"><a data-page-node-id="10ufK4sCTeXZn3Q5cPHezG" href="#src-8">[8]</a></sup>。</p>
+            <div data-page-node-id="25CtZYn9QwWRiH6E7cRpFK" class="verdict"><span data-page-node-id="k092Dfd0CWmtWBAppQnDPv" class="dot risk"></span>不能把“进度百分比”等同于“风险已量化”</div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section data-page-node-id="iKN1UDk2Ml65mBJjj9Hlul" id="safetycase">
+      <div data-page-node-id="FYpkstBRbzN3Yre4R9DdZ2" class="wrap">
+        <div data-page-node-id="ov6aN5p785Ye0reOXtxVaD" class="section-head reveal">
+          <div data-page-node-id="GyMGiwOp9rtqb28LubhXSK" class="section-no">02 / SAFETY ARGUMENT</div>
+          <h2 data-page-node-id="Ve3wUyNcKRgJhBM2HBbCqh">用 GSN 思路重构 S4 的安全论据</h2>
+          <p data-page-node-id="z8StbCDHG6ikAS6JFp8hcY">目标（Goal）：在获批运行场景内，Joby S4 对乘员、地面第三方与运行人员的风险可接受。以下六条论证路径基于公开资料与课程方法构建，属于课程分析模型，不等同于 Joby 或 FAA 正式提交的 GSN 安全论证。</p>
+        </div>
+        <div data-page-node-id="zsK6e0I1WWGuLasZPRXpCt" class="gsn">
+          <div data-page-node-id="CS5Fm4zVZWj3QbIUvpo7Kg" class="gsn-goal reveal">
+            <div data-page-node-id="NHMBRVygnhrKgOnqTWcGsJ" class="eyebrow">GOAL · 顶层安全目标</div>
+            <h3 data-page-node-id="VDOLSQc3iq8qy5CqP6fZ1M">Joby S4 在限定场景下实现可接受风险</h3>
+            <p data-page-node-id="jKVUSOsKoZ7L4en5ZNKaB6">限定场景：有人驾驶、视距/仪表飞行规则下、经 eIPP 与迪拜监管批准的演示与早期运行；高密度城市通勤尚未纳入当前证据范围。</p>
+          </div>
+          <div data-page-node-id="KjgKmvOmNJ6sD3l5GiY8oT" class="gsn-branches">
+            <article data-page-node-id="qYmgJYCaksq3zUO7CARooW" class="card branch reveal"><div data-page-node-id="ZfCn8rldnoYJL51cmwX83W" class="bno">ARGUMENT A</div><h4 data-page-node-id="NsmHEWWbfjmtVD1E1SvVBB">设计本质安全</h4><p data-page-node-id="WrmRMjnGRBArZeYp3R8Qo9">以动力、飞控、能源、作动的全冗余避免单点故障导致灾难性后果。</p><div data-page-node-id="nFkBpDEBpwGLYJ7AvylHbA" class="ev"><b data-page-node-id="xXmdzV5tM863OGhTYpNB9P">证据：</b>六台双绕组电机、四电池包故障隔离、三余度飞控、双套关键作动<sup data-page-node-id="PsHOIqeEWgzzkbKQds754c"><a data-page-node-id="kcO0dl5VdZfyWza5EbngKE" href="#src-1">[1]</a></sup><sup data-page-node-id="dYtOZzZPxx23A6dOMK84zX"><a data-page-node-id="XjAmTlCEqbQjOKWjveHVhA" href="#src-2">[2]</a></sup>。</div></article>
+            <article data-page-node-id="y4h0RWE6kDHPImOy3cqEbv" class="card branch reveal"><div data-page-node-id="fAj548g95jPJqdUBBOQoma" class="bno">ARGUMENT B</div><h4 data-page-node-id="k149l2PsedkS2Rpkqe4grv">符合性验证充分</h4><p data-page-node-id="ojoYBNkeQpcvbRE6sLte0Q">通过设备级、系统集成、整机与全过渡试飞，覆盖材料、结构、软件、动力与 Fail-Safe 逻辑。</p><div data-page-node-id="GmyOeJEkPObFzCrG53byY2" class="ev"><b data-page-node-id="YVAhqbPwHE5pGYCXD2AkOh">证据：</b>50,000+ 英里试飞、2,000+ 小时（第三方）；第 4 阶段 100%/100%<sup data-page-node-id="0XwBf34UGQAXu5INMuZ9Fi"><a data-page-node-id="54KBBoWxPLEFT4EeRON0wC" href="#src-6">[6]</a></sup><sup data-page-node-id="tO1PHpSsvU0vF02NmUtpJ0"><a data-page-node-id="xQ8NdbOi7mpAsghSqh5xXS" href="#src-7">[7]</a></sup><sup data-page-node-id="gWjRVXezDGaMOGI48kEbW4"><a data-page-node-id="Ohn2Hp4aUBPwviukO8hJZH" href="#src-3">[3]</a></sup>。</div></article>
+            <article data-page-node-id="DBLRCOr3wMLyZIrfGbbi6z" class="card branch reveal"><div data-page-node-id="1avKG5yB8q8pPjbJ8lSkVj" class="bno">ARGUMENT C</div><h4 data-page-node-id="uRkckgdxRPYaYAtY56EG0C">制造一致性受控</h4><p data-page-node-id="mk8JHCq0UQuFzKYUxewCoM">FAA 逐件核对生产机与设计验证机构型一致：紧固件、软件版本与材料均可追溯。</p><div data-page-node-id="MX5ZnpskeI1iBuTWluq71T" class="ev"><b data-page-node-id="jbDalFvC21cbSkAvGN1ZPS">证据：</b>首架 FAA 符合性飞机用于 TIA；5 架在飞、12 架在产<sup data-page-node-id="AqoZlFDDEorXlCbvrBiuL7"><a data-page-node-id="fvEFlzfsQnKUGBwZn0t1fj" href="#src-3">[3]</a></sup><sup data-page-node-id="1q63D4ab0OsbyS3IzmLK2Z"><a data-page-node-id="4IcO1HAcrD3oWjCaSbkfWa" href="#src-4">[4]</a></sup>。</div></article>
+            <article data-page-node-id="NF0Ah0CSfCNVzxCM3J5HXV" class="card branch reveal"><div data-page-node-id="92gHP4mNPPHWx5iB6AHeZ1" class="bno">ARGUMENT D</div><h4 data-page-node-id="IWpDonKIufAO6uOuzlBx5p">运行过程可控</h4><p data-page-node-id="Qp6imoaKe8yTYsHVtEIWa0">持证商业飞行员在机、Part 135 承运人资质、eIPP 试点监督、地面基础设施与应急程序构成运行防线。</p><div data-page-node-id="tDxDoA25X6G4GwwaDc42q6" class="ev"><b data-page-node-id="0CpTDcJaJ5gU9ot8eEddVS">证据：</b>2022 年取得 Part 135；eIPP 试点覆盖 11 州，由 FAA 收集数据制定规则<sup data-page-node-id="cpO04JJnWYlgeZRPMh0Vuk"><a data-page-node-id="MM4dPIGDuObiEZkywqjoHJ" href="#src-5">[5]</a></sup><sup data-page-node-id="fxP4Ej40MwSmFZHdKTW1xC"><a data-page-node-id="BqxYiEI2fVcCwrSVswA0Qz" href="#src-11">[11]</a></sup>。</div></article>
+            <article data-page-node-id="mGNFsnZRmUAe2GcAg8FWuh" class="card branch reveal"><div data-page-node-id="opAP8CkxgWxpn4LwLUrlsr" class="bno">ARGUMENT E</div><h4 data-page-node-id="A2HKvDrxeKV02ghuuZoEtR">持续安全与改进</h4><p data-page-node-id="MKJCduwwnXCtwE2MHzewno">健康监测、制造合资、运行数据回流与试点迭代支持持续适航与风险再评估。</p><div data-page-node-id="f313VQz99k94jkjiCE862i" class="ev"><b data-page-node-id="TO7eKByn4KrImyveOaqbDY">证据：</b>Toyota 制造合资；eIPP 数据用于 FAA 规则制定；Superpilot 用于国防验证<sup data-page-node-id="423A14aGhUn8IqClCRbehy"><a data-page-node-id="oWIDZ2Os1AaMcftRkfJJHh" href="#src-3">[3]</a></sup><sup data-page-node-id="RPwAFD50Y2hkrazgoAL9ve"><a data-page-node-id="CjByP0gr99qy3DjmsMxHtY" href="#src-11">[11]</a></sup>。</div></article>
+            <article data-page-node-id="vZv0sa29B8VxJok4jIigjI" class="card branch reveal"><div data-page-node-id="sIYzvOKbsxzJtVD9fzdA2j" class="bno">GAP</div><h4 data-page-node-id="nPj7DC5LdNIQafBBwf7Yr1">未闭合的安全论点</h4><p data-page-node-id="r3eSX6ytOsV8IEFxqARDTg">倾转机构共因失效、电池热失控概率、城市级第三方风险与飞行员新型别培训缺口缺乏公开量化证据。</p><div data-page-node-id="tk82gbP1cmd33q4eFE6AXM" class="ev"><b data-page-node-id="gOEpTwDuhDGT42IYxFH1yb">判断：</b>当前论据支持“限定试点场景安全”，不足以推导“城市通勤已安全”。</div></article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section data-page-node-id="8fWjyvSWS3sx5imaH5jQNp" id="baseline">
+      <div data-page-node-id="HqX3fGmX6g4I47Eo6logaK" class="wrap">
+        <div data-page-node-id="olH1IzF4YIsB6atG876GkT" class="section-head reveal">
+          <div data-page-node-id="nZM04nZpX7U09sFX0lNGD5" class="section-no">03 / AIRWORTHINESS BASELINE</div>
+          <h2 data-page-node-id="WUhnnEZlENZuJIzPrIky6t">适航基线：动力升力是“全新的类别”</h2>
+          <p data-page-node-id="OBNxfeEbfY6773FwE9TXEL">课程资料强调：飞行汽车不能把汽车与无人机成熟经验直接搬到载人航空。技术同源不等于体系等价，必须按适航体系重构可靠性、冗余架构、验证流程与运行管理<sup data-page-node-id="EkyXfwV9XIZSdig5a9b640"><a data-page-node-id="5Echs607DO0EuALqdw3E1w" href="#src-8">[8]</a></sup><sup data-page-node-id="CTYG0ZZCRFyO8MxBeh17FX"><a data-page-node-id="I6cDBXLHOEjL9xtb26XF2H" href="#src-9">[9]</a></sup>。S4 既非 Part 23 小飞机也非 Part 27 旋翼机，FAA 以“动力升力”特殊类别与专用条件审定<sup data-page-node-id="fo33wn2blx75J8BxEHfOeV"><a data-page-node-id="jGS4XTa7NaqfCgEMofXBJ4" href="#src-7">[7]</a></sup>。</p>
+        </div>
+        <div data-page-node-id="PNEtDKqKU401wM1ne6JJmB" class="baseline-grid">
+          <div data-page-node-id="nOtdo88lPF4MsARpVk977O" class="card baseline-card reveal">
+            <h3 data-page-node-id="C8VPOUtCrtZQZ8pCOGDfSA">航空 vs 汽车：安全标准的量级差</h3>
+            <p data-page-node-id="G5oz4PF7HOYEKNMtp9dlHc">第五章第 28 页给出监管逻辑差异。</p>
+            <div data-page-node-id="11iMGLSiVH9gLtTpAVYSd1" class="compare-rows">
+              <div data-page-node-id="ZXEeh2GqmA5FUhIC1vACBi" class="compare-row"><div data-page-node-id="Bc9X3H4RH88aPlWlGpE7MF" class="k">风险容忍</div><div data-page-node-id="NFn6W0T9hVJ6RpWE9clPId" class="v">航空：单机事故即重大公共风险；汽车：个体事故可统计、可接受。</div></div>
+              <div data-page-node-id="gLj5aqbH1J7QWEUT5S1amF" class="compare-row"><div data-page-node-id="bFIBH89cF7EDbaBwjeAZqH" class="k">安全标准</div><div data-page-node-id="pYvoQ4muYqwwcU70dKzxzZ" class="v">航空：事故极小概率（10⁻⁹）；汽车：事故率可统计、可接受<sup data-page-node-id="YIDgxP1KCoq3QfPybIEe1e"><a data-page-node-id="By2YIA4VmMnpC4m0JCBFff" href="#src-8">[8]</a></sup>。</div></div>
+              <div data-page-node-id="wWwtV3t4MtxB5SrTVBEh8U" class="compare-row"><div data-page-node-id="dYUhJlnhx5LA7RHwFfw4zL" class="k">审查流程</div><div data-page-node-id="FuXtkzDKZKaSAcOHeoGhUB" class="v">航空：事前强约束、全过程审定；汽车：市场准入 + 事后监管。</div></div>
+              <div data-page-node-id="V4ZRkboxhFBZ7TXBGq7KqB" class="compare-row"><div data-page-node-id="GEwCc1VfifuZ8vXPwL7Inh" class="k">技术迁移</div><div data-page-node-id="tQXByK9hBWsnMSXWCTJECz" class="v">新能源汽车三电约 70% 同源；无人机飞控/航电经验迁移率约 20%—30%，仍需升级至载人航空级<sup data-page-node-id="AFIOErxZh5jhULWDGr6OZ1"><a data-page-node-id="sinYYCbtAV7nE2GDPJ5ZGe" href="#src-9">[9]</a></sup>。</div></div>
+            </div>
+            <div data-page-node-id="Dv6ypizax9Plno6W8OLAlc" class="pill-row"><span data-page-node-id="0AkqP0YOqaZw80IvLZdvS0" class="pill">10⁻⁹ 目标量级</span><span data-page-node-id="5gGkHW8Tv7c9HgecgVAXTG" class="pill">三重冗余：飞控/能源/通信</span><span data-page-node-id="1IaFT4WdSddAVyIdr12i0D" class="pill">SSA · FHA · FTA</span></div>
+          </div>
+          <div data-page-node-id="E8QmPDJLi6xwNHQJ5slYbu" class="card baseline-card reveal">
+            <h3 data-page-node-id="EaKPncrUzfVM4362CMAcne">动力升力的专用条件与规则</h3>
+            <p data-page-node-id="JTUZl52baCuFpaWiufmqlo">S4 无现成审定标准，FAA 需为其制定专用条件<sup data-page-node-id="Iq7lECIb4KQpDtChHy7JaX"><a data-page-node-id="mO7vQ1EbWHcrbiTwmmXsfu" href="#src-7">[7]</a></sup><sup data-page-node-id="Xu98NLGSnwSwwMPZydwD0m"><a data-page-node-id="n9DMZUWIbbmFJkkKrVtv7I" href="#src-10">[10]</a></sup>。</p>
+            <div data-page-node-id="Cb5u6L9BHrc7AmaVscjETT" class="big-metric"><strong data-page-node-id="GSf5JM6RugEiRmTssHD5eC">5</strong><span data-page-node-id="06WDUnhMQWHvNH6IhFUQAc">阶段 FAA 型号合格审定流程，目前处于最后阶段<sup data-page-node-id="BtJQ5WR31GlTHuZ7V6PMK4"><a data-page-node-id="HK9ICjY92tawIOPeDoDK60" href="#src-3">[3]</a></sup></span></div>
+            <div data-page-node-id="COeUMH7CXj7gQcykYUjCW7" class="compare-rows">
+              <div data-page-node-id="lNjKqHFpRGe8v2eneqWl7G" class="compare-row"><div data-page-node-id="lkOJC4PQXZvIAZWBWVfoSI" class="k">类别</div><div data-page-node-id="76tRDl0Cs2GJJhzJr1v1h6" class="v">动力升力（Powered-lift）：可垂直起降与低速飞行，巡航如飞机，兼具直升机与飞机特性。</div></div>
+              <div data-page-node-id="D7dhzfrV6FemQalEAUNB7U" class="compare-row"><div data-page-node-id="cHdITUf4k3JvkNY3BuJEiA" class="k">专用条件</div><div data-page-node-id="Wp6FQDmmpgEPMH4A4Y1I9z" class="v">第三方报道称覆盖倾转机构、分布式电推进、电机失效后的 Fail-Safe 逻辑与电池可靠性标准<sup data-page-node-id="A0o0GtYP4TrLGKrZEXPwi9"><a data-page-node-id="7IBYBATqBFkBZweguoimuU" href="#src-7">[7]</a></sup>。</div></div>
+              <div data-page-node-id="DU84voXGwbSnkYrSilL6QG" class="compare-row"><div data-page-node-id="RxQ8gJUC7OZxhn6dXVRTk8" class="k">SFAR</div><div data-page-node-id="NJ85T7e9vCoRS0fHvZOzyb" class="v">SFAR No. 120 为临时规则，有效期 10 年，通过数据收集支撑正式规则；允许私用、共有、通勤/按需与空中游览运行<sup data-page-node-id="Q0zzymPoNtiRK61GCfc889"><a data-page-node-id="ND3HiBbnFFejGazw75f9Gi" href="#src-10">[10]</a></sup>。</div></div>
+              <div data-page-node-id="AW9f8BftpqwEfJV1tHnQxQ" class="compare-row"><div data-page-node-id="VKvaIxXv7168ENDkFDciE7" class="k">审定阶段</div><div data-page-node-id="t0cviXIKA9hTMy99XIkkug" class="v">第 4 阶段 Joby/FAA 均 100%；第 5 阶段 20%/10%（截至 2026-07-31），TC 未颁发<sup data-page-node-id="lZYm6SDHU8MaNAs6eqdClT"><a data-page-node-id="aDvFJqGFQjFq3FfMVWhkAI" href="#src-3">[3]</a></sup>。</div></div>
+            </div>
+            <div data-page-node-id="G2t5qxbnJOFkKsITbOM4uI" class="pill-row"><span data-page-node-id="XIg9U7jBBopbcKmBdpwqkT" class="pill green">有人驾驶降低自主化风险</span><span data-page-node-id="3GNf2XCnUi9w8QBwTFKn4k" class="pill amber">新型别等级与培训待建</span><span data-page-node-id="QnF13B5KY1ZmJ5X2unLdwY" class="pill amber">TC 未颁发</span></div>
+          </div>
+        </div>
+        <div data-page-node-id="3Q5v1SAt5RvPydPblCkm04" class="method-strip reveal">
+          <b data-page-node-id="6bdt5H0emJaHDcst4j44uG">标准体系映射：</b>课程第五章第 81 页列出航空安全标准——<b data-page-node-id="HURcD0QFKsWQHO0WsV6IX1">SAE ARP4754A</b>（民用飞机与系统开发指南）、<b data-page-node-id="mLcZQVnHbZkRW7sSnPKFUb">SAE ARP4761</b>（安全评估）、<b data-page-node-id="P4gGX0ZjETIBGu45dAEg4G">DO-178</b>（机载软件）、<b data-page-node-id="lvPC9UCjrGEvIi27U0Fwo4">DO-254</b>（机载电子硬件）、<b data-page-node-id="RwtyH0rbsNQD5ANF9R3Z4a">MIL-STD-882E</b>（系统安全）；汽车侧为 ISO 26262 功能安全、ISO 21448 预期功能安全、ISO/SAE 21434 信息安全<sup data-page-node-id="3TtzvoJqsPkmqZAoSAmYgG"><a data-page-node-id="vW0XBVGfvbYgRmvLVEQVkQ" href="#src-12">[12]</a></sup>。S4 的有人驾驶路线把这些责任更多交给飞行员与适航审定，而非完全依赖机载自主系统。
+        </div>
+      </div>
+    </section>
+
+    <section data-page-node-id="DyclRi8v5QPJKEQXg4X0M4" id="hazard">
+      <div data-page-node-id="mcIbnsFuCKf4M5rtKyU4vp" class="wrap">
+        <div data-page-node-id="ZRt5jS8B3YBNHDDFOJqjvq" class="section-head reveal">
+          <div data-page-node-id="uJALylNvQOuU62wsv6ORVH" class="section-no">04 / HAZARD ANALYSIS</div>
+          <h2 data-page-node-id="fo12KoxnM4jtJxw8dkrVyZ">危险分析：从旋翼到空域的八类风险</h2>
+          <p data-page-node-id="VIjK7Lf8zTHfFckqFQou9v">依据课程第四章第 37—38 页与第五章第 78 页列出的设计阶段考虑因素：危险分析与风险评估、碰撞/障碍物规避与多维坠撞安全性、空中火灾与操纵失效对策、极端天气鲁棒性、飞行员培训、网络与电磁攻击防护<sup data-page-node-id="nOn3D5QNcBHTqw8xnBufPh"><a data-page-node-id="ACAav2CMYlydvInrTXbalq" href="#src-13">[13]</a></sup><sup data-page-node-id="c7ygPJsMp35fDPPfuKC1RZ"><a data-page-node-id="bNXltwHH31i38xFu5bOwaC" href="#src-14">[14]</a></sup>。</p>
+        </div>
+        <div data-page-node-id="btVgDhqjG6oChb2MEZVVwu" class="card hazard-card reveal">
+          <h3 data-page-node-id="Z7eQhVYdBseOFAqoGAGW49">S4 危险清单与现有缓解措施</h3>
+          <p data-page-node-id="RHQ5eBKzkuClOHiVtNmege">严重度与可能性分级为课程组主观研判，非 Joby/FAA 官方定级。</p>
+          <table data-page-node-id="AQz9RWkqRkCe6H1V30Ehzl">
+            <thead data-page-node-id="KoC8fiSdyX7hcS9ad0I5Ei"><tr data-page-node-id="twrsLfMjRwGUogt24zwEAd"><th data-page-node-id="ZMM6YOwAcnVewQH42s4fKE">危险场景</th><th data-page-node-id="hiFlBd7tGNPdGRJR1Y34vY">潜在后果</th><th data-page-node-id="6icLISGyvea18mjp2Tispe">已公开缓解证据</th><th data-page-node-id="KnBtiqFIb9tA11bWRzjhR3">严重度</th><th data-page-node-id="GNjs6A7fjVNDIQZ6ViViRH">残余风险</th></tr></thead>
+            <tbody data-page-node-id="5jwLQwm2uEXYe5FCm8NQfg">
+              <tr data-page-node-id="hFTdQRkoRfmePXruX56f28"><td data-page-node-id="wcMtNDizFmmaN1kFur0IgS"><strong data-page-node-id="htGwNcUSLHfp0ISDK0uS2L">倾转机构卡滞/不同步</strong></td><td data-page-node-id="8UMUhp3VmZHfOt4bHAaBov">过渡段升力突变、姿态失控</td><td data-page-node-id="H6xDFjpVCRXfX8bTo6id4W">六电机分布式推进；专用条件覆盖倾转机构；飞控实时分配扭矩<sup data-page-node-id="eCq2me8xr7Iwg3UbIYS6jq"><a data-page-node-id="ADUgsmzuGbnIU8Y1rLEKPt" href="#src-7">[7]</a></sup></td><td data-page-node-id="MxwsSZblzMQ9qK6C1LdbCx"><span data-page-node-id="HBgZwslGOvwcjIL1CU04M7" class="level high">灾难性</span></td><td data-page-node-id="HmRa57B3ioy6g5ngEzmLbH"><span data-page-node-id="H4zPn7t0TRsuKnaajG8eps" class="level mid">中（概率未量化）</span></td></tr>
+              <tr data-page-node-id="nKpeGArPhAkRIIODyjxwoq"><td data-page-node-id="lxeLJSZ3wHl8Yhk0VcEQkH"><strong data-page-node-id="2MGsIE7AjpjtsDCn7qTKRd">单电机/螺旋桨失效</strong></td><td data-page-node-id="UIHj71UQLHaXXpJsGGBbsE">推力不对称、偏航力矩</td><td data-page-node-id="xu9A7eJICCIGrwfauBSGzS">六个双绕组电机；第三方报道称一台失效其余五台仍可工作，飞控实时调整扭矩<sup data-page-node-id="N1RAFOkX7eH2CROm2e8dAb"><a data-page-node-id="fQRtdaAP0yVCTI9n1By9xT" href="#src-7">[7]</a></sup></td><td data-page-node-id="X5eC9qbgzRKxZanBSLQSoK"><span data-page-node-id="jM1YJGsnnYJdstebOIKfF6" class="level high">高</span></td><td data-page-node-id="5SGYZ9LxVdhaBc5nJn9ksb"><span data-page-node-id="ANg2XxaG8KdqECNEY73w0s" class="level low">较低</span></td></tr>
+              <tr data-page-node-id="p81b6foU2uWJ0c2cL3aD91"><td data-page-node-id="PfUbmJFC0nXVQuVnwh7ay6"><strong data-page-node-id="sKsmmprWuFtllar1YDMuqi">电池热失控</strong></td><td data-page-node-id="pCzfiHD8BegHhh397ew19Z">起火、失去动力</td><td data-page-node-id="G72oKfFKYvb7a3tELz1EBE">四个独立电池包故障隔离；专用条件覆盖电池可靠性标准<sup data-page-node-id="9bNgKXr9MGhCh2dupQfDV5"><a data-page-node-id="unLBMZCEF0BLExuuTU0KLg" href="#src-1">[1]</a></sup><sup data-page-node-id="mw7vkpbbgZ4642Jd2iaxJw"><a data-page-node-id="UHl94bpTnwYstLrotqXF0L" href="#src-7">[7]</a></sup></td><td data-page-node-id="xnsTZUBMkMIucSrDn45EKE"><span data-page-node-id="JBGPRgakMQePXTPu63Dh4i" class="level high">灾难性</span></td><td data-page-node-id="HS49WAI0cCGa3LAQGeE4dR"><span data-page-node-id="O6MOIv0iJO7zXEuyw7mLiM" class="level mid">中（无失效概率公开）</span></td></tr>
+              <tr data-page-node-id="E3ApY8uvPgjVNIf7qlKWrH"><td data-page-node-id="BPjALwlV4f3e3qfUVNFRBN"><strong data-page-node-id="MGmSKkeC757Lyh6eCb4EOq">飞控计算机失效</strong></td><td data-page-node-id="vve0evepq4RZqjsDosJqlQ">操纵失效</td><td data-page-node-id="uzFHVjZVoH5k3t8D35hoqK">三余度飞控计算机；双套关键作动系统<sup data-page-node-id="h1ij0KvYBql5rxC09ueK8s"><a data-page-node-id="In91r1iKIZ9gzd9xYXYoEO" href="#src-2">[2]</a></sup></td><td data-page-node-id="D923xrwCb85jX3W8ci48v7"><span data-page-node-id="OEasg8XHHBJkejoIFnGPNp" class="level high">灾难性</span></td><td data-page-node-id="lBvbilDKlCc11lnvK0Eln3"><span data-page-node-id="ljDFPCb1qqegCvIQ4jxcKB" class="level low">较低</span></td></tr>
+              <tr data-page-node-id="ylTXhKTtw8IxuMNZij4yeg"><td data-page-node-id="WBTw4nw9ALzXuEhGvUC6p8"><strong data-page-node-id="c5TMitRVX5QD4Jc1nwWaA7">通信/导航中断</strong></td><td data-page-node-id="4mJVo3O9jFsetxncCIdRYW">偏离航线、失去空管协同</td><td data-page-node-id="gpUrHsDpIthvDqhhnVmUVH">有人驾驶可目视/仪表飞行；飞行员培训与空管程序构成防线<sup data-page-node-id="ODZFXD49DODIGIJXwuDKDk"><a data-page-node-id="MQIobu2qNcVJP1pJCiA4zQ" href="#src-10">[10]</a></sup></td><td data-page-node-id="jS7JoUOG4HgZRQ3JJKVh01"><span data-page-node-id="Nq12yUEoeR2bbkEfVCsziv" class="level mid">中</span></td><td data-page-node-id="i2uf1MGBp847lxEHBh6lAV"><span data-page-node-id="uhktJz1scdkjYZvXtDAPtF" class="level mid">中</span></td></tr>
+              <tr data-page-node-id="EuyHFhhiRUZa9SibTUytMm"><td data-page-node-id="1bsnkq9mnMcXnPvBrNj2CM"><strong data-page-node-id="r26uZsb165W2SO6nmhaqkL">极端天气（雷暴、强风）</strong></td><td data-page-node-id="Ez22eCiYrUVaW1RFnfF7JM">结构超限、失去控制</td><td data-page-node-id="x7vEwvzKpC8wsEECgNGR47">课程要求极端天气鲁棒性设计；S4 具体包线未在公开资料中量化<sup data-page-node-id="EdtcbWR6DQa4sHVxnRYXxW"><a data-page-node-id="dwwPkT9tChcRYtLA0dNVxZ" href="#src-13">[13]</a></sup></td><td data-page-node-id="x2BDLnJTrr9OgYF15L74NF"><span data-page-node-id="pDUizUiXVnDLcniRhT7TUR" class="level high">高</span></td><td data-page-node-id="K8ZaQPdrAJpOb6Cxy0ERUV"><span data-page-node-id="FzQzeuNSNRGz0N6cRjmb0I" class="level mid">中（数据不足）</span></td></tr>
+              <tr data-page-node-id="UzhIcThAolg46EpZV2tx3H"><td data-page-node-id="H1lJcuRIVm3Z6ZCr0JhI9S"><strong data-page-node-id="EgImguwP4fibxsbaWqOMhx">地面第三方风险</strong></td><td data-page-node-id="UpNE5sAwET6bn83xT7DBeu">坠机伤及地面人员</td><td data-page-node-id="xrraKkQe4P6oJ4DarbMWn4">45 dBA 低噪声降低社区冲突；垂直起降场选址与空域协调；无公开第三方风险定量结果<sup data-page-node-id="bsjlejcMUFhzihtHM73trl"><a data-page-node-id="18hau4ErDYRwOzOil2QfAs" href="#src-7">[7]</a></sup></td><td data-page-node-id="CpFDXpm42BLPmGVAQRQ77K"><span data-page-node-id="DVhFL9I0IruO4rxbrRPT0z" class="level high">高</span></td><td data-page-node-id="JRVBaIPSBBEXXEjTf8ZdrW"><span data-page-node-id="Q4O6eHNlE7XsRZ3PFRCBdp" class="level high">高（未量化）</span></td></tr>
+              <tr data-page-node-id="JHEiUpMxwUAjVSUI9eWL3I"><td data-page-node-id="2XKnpkGaaLVy46Uktid0nE"><strong data-page-node-id="9Zt0lIXaNfHQji35HYXvIZ">网络/电磁攻击</strong></td><td data-page-node-id="jBe4BA8v4OBHqrv7zfMkH0">飞控或地面系统被入侵</td><td data-page-node-id="hvqzMM3FfJ7T46HKU5hJRy">课程明确需防护网络攻击与电磁攻击；S4 具体信息安全设计未公开<sup data-page-node-id="xg2dCKXk621isLcH8yS25E"><a data-page-node-id="cEdenbZjXSjb18QZylD4PD" href="#src-13">[13]</a></sup></td><td data-page-node-id="Py0c0OWpWDe7beYEtLH2Jw"><span data-page-node-id="Ao2ooOhlr9z7GJROEdAlee" class="level high">高</span></td><td data-page-node-id="1GAlBKpER4TuE02DQwF8C5"><span data-page-node-id="T0eiMhmgkzIZJG9aJO5Kd8" class="level mid">中（证据不足）</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section data-page-node-id="ehg6NeMgofEFa8sP3fAzFH" id="process">
+      <div data-page-node-id="hBiL1qkX1iJY8hYsucy6vA" class="wrap">
+        <div data-page-node-id="Lo8NSJz8ojxEtiysXLYswp" class="section-head reveal">
+          <div data-page-node-id="9nLwV0P1yj39apHtEzZO4n" class="section-no">05 / SAFETY ENGINEERING PROCESS</div>
+          <h2 data-page-node-id="HyWX9P4XB5pGOunD29OVTk">系统安全工程 0—8 过程映射到 S4</h2>
+          <p data-page-node-id="K4zBNGuPPtVR7Cb5BKcsZk">课程第五章第 80、84—87 页给出智能运载工具安全系统工程的基本过程与实现方法。下表将其映射到 Joby S4 的公开证据<sup data-page-node-id="IhflanQy6xJnMMtNJCmEzL"><a data-page-node-id="1EPxkjDXE1hhFwO7rOZxZj" href="#src-15">[15]</a></sup><sup data-page-node-id="OkHBkLBqt4GFIduKxGLAgX"><a data-page-node-id="ZMaBAieq9f4EHoVUWGMVDZ" href="#src-16">[16]</a></sup>。</p>
+        </div>
+        <div data-page-node-id="q2iEOeGIKvR1mA0AakMQJx" class="process-grid">
+          <article data-page-node-id="e6q3rFpIZQ4eDBG1uKg9kZ" class="card step reveal"><div data-page-node-id="7ewLuSrCvOLKF5b0nQChvy" class="n">0</div><h4 data-page-node-id="If3bIPVqIfoVXO1GFcHUGr">安全文化与安全管理</h4><p data-page-node-id="AcmFbEN3CqJEWsVKqJsjS0">适航审定文化、FAA 全过程监督、Toyota 制造质量体系；课程强调组织与生命周期充分性论证。</p><div data-page-node-id="Kw65UOtdwDgM6gKwRhwAMF" class="tag">流程安全论证</div></article>
+          <article data-page-node-id="i6VdNSetzkjkxV8WwljtLD" class="card step reveal"><div data-page-node-id="gfzRzcGh1q9EGRMsBElTV5" class="n">1</div><h4 data-page-node-id="jEOjc43bDyHq4bkCsBGmWq">整机功能与场景定义</h4><p data-page-node-id="NUWw302VPDKWeoDDyF9HpY">5 座空中出租车、机场接驳与城际航线；eIPP 11 州与迪拜 4 座垂直起降场为典型运行设计条件。</p><div data-page-node-id="DO4OVUkOH5VNNtxz4rSLSp" class="tag">ODC 场景分析</div></article>
+          <article data-page-node-id="UICfIMau8jGxO8kWs2kQmB" class="card step reveal"><div data-page-node-id="bCuFrGocW5hJGEEez09WzZ" class="n">2</div><h4 data-page-node-id="Ah7DR0ARmg1uRBZnGbRmNI">安全分析方法</h4><p data-page-node-id="vVxJKpmbsq01LCIaQgPkei">课程列出 HARA、FHA、STPA、FMEA、FTA、CCA、PSSA、SSA；S4 具体报告未公开。</p><div data-page-node-id="1lJTceaPbOSKg4Fnd0JslL" class="tag">证据缺口</div></article>
+          <article data-page-node-id="WrOExFuE4CGCXrchFMuHcO" class="card step reveal"><div data-page-node-id="JguEvw51k8UFJFuFRRtQBy" class="n">3</div><h4 data-page-node-id="9y51c5rEpgcDJsClpa4SDh">系统安全架构设计</h4><p data-page-node-id="COPGa28GwgCIc4kF0tuGcG">六电机/四电池/三余度飞控/双作动；有人驾驶作为最终安全屏障。</p><div data-page-node-id="LfMBjQCf7SYMRTtnWrrxUn" class="tag">1oo2 / 2oo3 类冗余思想</div></article>
+          <article data-page-node-id="dkO2WV4pVr1Bxsxzp0UNoC" class="card step reveal"><div data-page-node-id="bdwDJKCf2ydWJlqPDvDE5W" class="n">4</div><h4 data-page-node-id="8tDWy2BD4u5FMHCCbhDMpO">硬件安全设计</h4><p data-page-node-id="gxvkeSprixKVj2W0nITl4e">双绕组电机、独立电池包故障隔离、高压互锁；钛-铝-碳纤维机体。</p><div data-page-node-id="NGMTmwEhnLDK1aCIHZuXwB" class="tag">故障检测与隔离</div></article>
+          <article data-page-node-id="hD7PSU0qH2lraRQdSeCxl3" class="card step reveal"><div data-page-node-id="BpMw1UQ7ZCkdww3dRIVRAX" class="n">5</div><h4 data-page-node-id="MlM6EoZu7KvRWmCsichZcH">软件安全设计</h4><p data-page-node-id="b88bhjsWuETlOfTCbvmP8T">飞控软件与自主技术自研；DO-178/ARP4754A 体系要求；第三方报道称飞控实时分配扭矩。</p><div data-page-node-id="M9wE5BgO5aIB9ZWmfFnOyc" class="tag">机载软件审定</div></article>
+          <article data-page-node-id="h6SNP7wBeJor611ZVC0x6E" class="card step reveal"><div data-page-node-id="HCkuVId1GThgCr6jY6rji5" class="n">6</div><h4 data-page-node-id="OxOiV8DmCGmkKjnX0ePLFE">机械/电气/化学安全</h4><p data-page-node-id="ZZ4oe2OnnX8TRreRiXj0CK">倾转机构、电池热稳定性、防火阻燃；专用条件覆盖倾转与电池可靠性。</p><div data-page-node-id="piVzhDx9jXD3cjKsEAeIbN" class="tag">热失控预警与控制</div></article>
+          <article data-page-node-id="MvuFoe2L9z6QZfU6MPfkRq" class="card step reveal"><div data-page-node-id="KJLAuCWLg2oTDFjkxwU8Bj" class="n">7</div><h4 data-page-node-id="bZQjBCOryXMNK4g0sXsjEw">安全测试验证</h4><p data-page-node-id="RMJnJa8UXmOJ9PdC7gv91C">设备级测试、Whirly Bird 试验台、NASA 风洞、全过渡试飞；50,000+ 英里、2,000+ 小时。</p><div data-page-node-id="t1QooVuaK7EKptciQRQBYG" class="tag">V 模型右侧</div></article>
+          <article data-page-node-id="BTEBvX8mCH3ssxikqS7QqU" class="card step reveal"><div data-page-node-id="4ud7zoPEBN7wkI9pztdjZ0" class="n">8</div><h4 data-page-node-id="CmAgalmlgrbWoJ1VxqTUVZ">运行安全论证</h4><p data-page-node-id="fcVCPFnRjL7U3metU7HYE5">Part 135 承运人、eIPP 试点数据回流、GSN 论证；TC 未颁发，论证进行中。</p><div data-page-node-id="O2Mr6yC2pBsQguGVWzPS8v" class="tag">产品安全论证 GSN</div></article>
+        </div>
+        <div data-page-node-id="IcPIgGdV0hxWai8yif9C6P" class="method-strip reveal">
+          <b data-page-node-id="RwvMeCEmuilPo0E5f067xM">方法说明：</b>课程第 87 页给出各阶段典型方法——整机层 HARA/FHA/STPA，系统层 FMEA/FTA/STPA/CCA/PSSA/SSA，组件层 FMEA/FTA/FMEDA/CAE；典型安全架构包括 1oo1、1oo2、2oo2、1oo3、2oo3、1oo2D；安全论证采用流程论证与产品论证（GSN）<sup data-page-node-id="ncisKTTcTRSyANj0G2oLTT"><a data-page-node-id="SkNHkqSWFQgvQufbNpsCMz" href="#src-16">[16]</a></sup>。本页将其作为分析框架，不代表 Joby 实际采用了相同的分解方式。
+        </div>
+        <div data-page-node-id="UFj6RE5XrPoSxzkOtDQc3A" class="matrix-grid" style="margin-top:26px">
+          <div data-page-node-id="AUIzAmrRZ2Nub12eHxGqF4" class="card matrix-card reveal">
+            <h3 data-page-node-id="alNWn0zwNqTKvRtTjUnVH5">5×5 风险矩阵（课程组主观研判）</h3>
+            <p data-page-node-id="u1XEcRH6kZyABvD7xHqePE">左轴为严重度、上轴为可能性。数值为演示性评分，非官方风险定级。</p>
+            <div data-page-node-id="x0JmMmtheVWFA0GfLgr1HR" class="matrix">
+              <div data-page-node-id="G3QzJj1EYjYFTtRUiOVK0q" class="axis">严重度↑ / 可能性→</div>
+              <div data-page-node-id="8Xf3YyirxpkfhoYYqxZy2F" class="axis">1</div><div data-page-node-id="9KiqWytTE2VsVB1vJFtuz5" class="axis">2</div><div data-page-node-id="iIXui0c26LCPI9IWErlyvf" class="axis">3</div><div data-page-node-id="jGD7pNIbXHE2E3Om9kiFhM" class="axis">4</div><div data-page-node-id="4MSnpnxPek9mjupADkQD7H" class="axis">5</div>
+              <div data-page-node-id="VqEAYiieOQGxxO4DZvMrf2" class="axis">5</div><div data-page-node-id="1q0NROdeTBs9aGVEHd02nP" class="cell mid">5</div><div data-page-node-id="ZTqJqvzYl2Eho6urqn2m5q" class="cell mid">电池</div><div data-page-node-id="4ejOQB991C4iprmMMM4KNC" class="cell high">倾转</div><div data-page-node-id="uWwR1osXCF3B8mRAqKptOy" class="cell high">15</div><div data-page-node-id="sUEqMtfBZ54mstO421Kn8K" class="cell high">20</div>
+              <div data-page-node-id="RO1dGmN1aE3Y0axKET4n7o" class="axis">4</div><div data-page-node-id="kttVh0YpMFZP1Df7HlQghs" class="cell low">4</div><div data-page-node-id="pi6DzJ38RyXkCtNWv1Ma7w" class="cell low">8</div><div data-page-node-id="0EQPu5LEB1fFrrwdcQl2wC" class="cell mid">12</div><div data-page-node-id="W7NAFhZPAS6ZxvXW9Dlsdy" class="cell mid">16</div><div data-page-node-id="UEGSXlJOuZxW6yVda6p7kB" class="cell high">20</div>
+              <div data-page-node-id="gZ3YlXXr6GArbmL7F6DQkg" class="axis">3</div><div data-page-node-id="ksDYgBFlR9uf9XHRc2JukO" class="cell low">3</div><div data-page-node-id="067nth8L5t2KjrOCiU4dZf" class="cell low">6</div><div data-page-node-id="OGCIWyYB0DN1IYaJau5JhF" class="cell low">链路</div><div data-page-node-id="JBkrzMiEb4NfKmDj2yzs0d" class="cell mid">12</div><div data-page-node-id="phOHH68lyKBjqHZh9wNwBC" class="cell mid">15</div>
+              <div data-page-node-id="zzHvVdoBajvCBckvZs6We4" class="axis">2</div><div data-page-node-id="aD9EQizOrhEWtqnRAVcofe" class="cell low">2</div><div data-page-node-id="eDFmUe93DVbogUS0CuoHWq" class="cell low">4</div><div data-page-node-id="Ne5S4g7Ag8pAeSgpqhGYic" class="cell low">6</div><div data-page-node-id="Nl3kZcEKW1OpMCMnRnPxvb" class="cell low">8</div><div data-page-node-id="dndNJ5UzQkrqQF32QDD1dg" class="cell mid">10</div>
+              <div data-page-node-id="zegpR6UxP47Z3noMZGjK1T" class="axis">1</div><div data-page-node-id="d3S20DW3RiP6OJK5ADx8eJ" class="cell low">1</div><div data-page-node-id="jumgwmHzLQsS0NE941CWGz" class="cell low">2</div><div data-page-node-id="ny3DY7jkLTn45G11F9WyUw" class="cell low">3</div><div data-page-node-id="PqpTR5NZzlQAX5HGFd6sA8" class="cell low">4</div><div data-page-node-id="HNt6PcCrxxuTfYQ8BZQ90S" class="cell low">5</div>
+            </div>
+            <div data-page-node-id="T5AS7KxQ6rM0aHJBmQTvJj" class="matrix-legend"><span data-page-node-id="UK2ysPa0kpXcLzlQG76lOd"><i data-page-node-id="3e85ya09d7CbACRK8PHGNw" style="background:#e7f7f1"></i>低风险</span><span data-page-node-id="LiU9ubfGSVUujiyB7duDAY"><i data-page-node-id="5MCicrsKvXnNYfZihiEIcZ" style="background:#fff2d9"></i>中风险</span><span data-page-node-id="ufDgyvq6C6iELFm6D92O9n"><i data-page-node-id="xgu8cE46q4bE05xC3ESpHg" style="background:#fdecef"></i>高风险</span></div>
+          </div>
+          <div data-page-node-id="TMCUOuvyuhm1TOvsYIVJOJ" class="card matrix-card reveal">
+            <h3 data-page-node-id="zK9rWZZsZmzJywkSIybiwC">风险迁移思路</h3>
+            <p data-page-node-id="UyhwReh5F9DEbvX8GWIQPk">通过冗余、审定与运行控制，将高风险向低风险区迁移。</p>
+            <div data-page-node-id="jWDvzwHDDiqdWqjiu2nEtO" class="matrix-list">
+              <div data-page-node-id="16AK0u5D6LlFhixdC8bQOo" class="risk-item"><strong data-page-node-id="g4fWB3z6e0LiM1mTUo9ZLa">倾转机构：高风险 → 中风险</strong><span data-page-node-id="LyCa3HfsfFRW0vV0f6S1iP">依赖专用条件验证、六电机冗余与飞行包线限制；需补充共因失效分析。</span></div>
+              <div data-page-node-id="x82FV5tvmUIkuiPMJTGLJ2" class="risk-item"><strong data-page-node-id="mFIBVGqpW25rpu00P9Brdr">电池热失控：高风险 → 中风险</strong><span data-page-node-id="mkPLILBlB4weaHp2HyUrgb">四包故障隔离 + 热稳定性设计；需公开失效概率与预警机制验证数据。</span></div>
+              <div data-page-node-id="1aUVWAapZywRGgk9lm6GbH" class="risk-item"><strong data-page-node-id="htlY2c7Yg5ZlwqK518OimK">地面第三方：高风险 → 待降低</strong><span data-page-node-id="Bs2tO35t7mtP8HxzH3iyBR">需垂直起降场选址、空域隔离与坠撞概率定量评估；当前公开证据不足。</span></div>
+              <div data-page-node-id="aehXLKofhOmxOIZ7nLD343" class="risk-item"><strong data-page-node-id="HJg2GUiSaNI2f4AAn31hoW">通信链路：中风险 → 较低风险</strong><span data-page-node-id="qfEVE0OkwFcdAltTqlLzuI">有人驾驶与仪表程序提供备份；无线链路失联统计未公开。</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section data-page-node-id="BZSFMV7z4HOLL6oZzB4i4B" id="operation">
+      <div data-page-node-id="IS3nV6K1WFtbBEtr72sm9t" class="wrap">
+        <div data-page-node-id="MSMH3pfkPARgTPwY4ym0BF" class="section-head reveal">
+          <div data-page-node-id="h0q4JkJaADYgY70sXGShNu" class="section-no">06 / OPERATIONAL SAFETY</div>
+          <h2 data-page-node-id="t4QDtaBIdk0XClyElGjo9Y">运行安全：取证与试点是两条并行线</h2>
+          <p data-page-node-id="VJr3RcOBECcK9nsZZVsyRi">Joby 的安全论据中，“型号设计安全”与“运行过程安全”必须同时成立。前者由 FAA 五阶段审定给出，后者由 Part 135、eIPP 试点与迪拜运营逐步建立。</p>
+        </div>
+        <div data-page-node-id="BUlfR40xezEmJofCBZThqF" class="timeline">
+          <div data-page-node-id="OLUNBYf0HPlAgGzB3Ylh6Q" class="tl-item reveal"><div data-page-node-id="hHkxp6CA7xuQbMJAlkUaH7" class="tl-date">2022</div><div data-page-node-id="8FObbNW3mf4kzS5sCqTxkR" class="tl-body"><h3 data-page-node-id="haiZTLp0DYKVOhPjBGrdnF">取得 Part 135 航空承运人证书</h3><p data-page-node-id="eyJEXNpaw6X2eWIztbHYWL">为商业空中出租车运营奠定运行合格审定基础<sup data-page-node-id="QyhUBELSuMud2QCbcPI67F"><a data-page-node-id="lupYA4GTOBUB76IX5SGaat" href="#src-5">[5]</a></sup>。</p></div></div>
+          <div data-page-node-id="8ZqsHNtqajmkhTLjDqkYMr" class="tl-item reveal"><div data-page-node-id="kb2UQNaO5CZNCB1mmDXAUp" class="tl-date">2023 — 2024</div><div data-page-node-id="k5cmHzAiqGSem1PteODgGI" class="tl-body"><h3 data-page-node-id="zoVQzM906FUbbus4FEk0eD">第 3 阶段完成，进入第 4 阶段</h3><p data-page-node-id="5LbuBixG6QLlNQDtTVUYIB">总体设计构型锁定；第 4 阶段开展测试与生产一致性验证<sup data-page-node-id="E1UeB487yThTEvDhUd7g1O"><a data-page-node-id="TYFAJIDFa1HD33Hwkm9i6t" href="#src-7">[7]</a></sup>。</p></div></div>
+          <div data-page-node-id="leW3lckPRApgfrFfjPqEuf" class="tl-item accent reveal"><div data-page-node-id="NAcnF1X8iuYrEKSZqYdzPC" class="tl-date">2026-02-25</div><div data-page-node-id="AbDc4GX8hPdAFHeqZRneWm" class="tl-body"><h3 data-page-node-id="8LZfCNIYD4VO3hBi0v44Hn">迪拜首批乘客目标发布</h3><p data-page-node-id="T8k8B5D9S4tBBoWUfI1r2Z">Uber Air powered by Joby 发布：由持证商业飞行员驾驶，配套一键预订与地面接驳；当时累计试飞超 50,000 英里<sup data-page-node-id="NQ7qhyYeA4Ewg5gkRwO4T8"><a data-page-node-id="tjGfBv2dRZ3wXtwtptMMru" href="#src-6">[6]</a></sup>。</p></div></div>
+          <div data-page-node-id="Byn51GmNGE7MBGamxvIY5V" class="tl-item accent reveal"><div data-page-node-id="jrBTrhy1Lx3NyHqAbwlVOR" class="tl-date">2026 Q2</div><div data-page-node-id="vwqTRCn9k5O6W6zl7D3ccl" class="tl-body"><h3 data-page-node-id="zYtiawsxZEPIrPScUcmxOk">第 4 阶段完成，第 5 阶段进行中</h3><p data-page-node-id="pFnKHvTEj573HBkBxuY7DT">截至 2026-07-31，第 4 阶段 Joby/FAA 均 100%，第 5 阶段 20%/10%；首架 FAA 符合性飞机飞行，5 架在飞、12 架在产；首批 eIPP 飞行预计 9 月在得州<sup data-page-node-id="C7LVoQ756xGtaNjpPzNnze"><a data-page-node-id="EtopeqvuxnQK2ABk8aArSH" href="#src-3">[3]</a></sup><sup data-page-node-id="nWKRmaxmX1wvGUOHcCDK7f"><a data-page-node-id="VZtD2jeI4bQJ1mLa4wkkGI" href="#src-4">[4]</a></sup>。</p></div></div>
+          <div data-page-node-id="g9qM6jBEciXLHZDNhbjHN0" class="tl-item reveal"><div data-page-node-id="JMdYTXscvKZp6ldKR3jCuE" class="tl-date">2026-11</div><div data-page-node-id="sN1XIYTaQRPKMnBFCDB7qw" class="tl-body"><h3 data-page-node-id="FO22tHSJEGAFvTDNLZjQjj">FAA eIPP 得州演示</h3><p data-page-node-id="NNdJKiTfesswfhuiouL4pw">在 Perot Field Fort Worth Alliance Airport 进行 eIPP 演示，并计划飞往 DFW 往返；FAA 明确将从试点数据中制定规则<sup data-page-node-id="LbUWZZuZQeRHsvx1YAx4bi"><a data-page-node-id="3guJrnZIVIqIY0rE5U4Qkx" href="#src-11">[11]</a></sup>。</p></div></div>
+        </div>
+        <div data-page-node-id="5laxcfFlNkQhmAl5AxOCSw" class="method-strip reveal">
+          <b data-page-node-id="0z43uAaVgheW4RkkCpDMEy">运行边界说明：</b>首批载客目标（迪拜 2026、美国 eIPP 2026）属于试点项目下的运营，不等同于完成型号合格审定<sup data-page-node-id="LKxZVqOxiboa4XU320NARD"><a data-page-node-id="7diVbTVjdHEdRt9mJGLpzv" href="#src-3">[3]</a></sup>。有人驾驶虽降低了完全自主化的安全论证难度，但第三方报道指出，S4 过渡段操纵与传统飞机不同，FAA 将颁发型别等级并提出训练与近期经历要求，而培训体系需从零建立<sup data-page-node-id="dhnXllae0MEGvt5lg8gi0H"><a data-page-node-id="hcJcyyF9Dia7ysode7TUMp" href="#src-7">[7]</a></sup>。
+        </div>
+      </div>
+    </section>
+
+    <section data-page-node-id="NEXmZ3HsN6c11stbA28LCX" id="recommend">
+      <div data-page-node-id="JmeZXAbNt9CZpyFMIlm67b" class="wrap">
+        <div data-page-node-id="9vcIXEk5CjrCYCaf1yTXzO" class="section-head reveal">
+          <div data-page-node-id="I4AqTqdFkvsk7rW0Ahien0" class="section-no">07 / EVIDENCE BOUNDARY</div>
+          <h2 data-page-node-id="8y0SsSghOhAj9AWIpsiJQo">证据边界与改进建议</h2>
+          <p data-page-node-id="cJEJkY6oDvty1kJ6pXBFtG">把“已公开证据”与“未公开但必需的安全证据”分开，是避免过度乐观或过度悲观的关键。</p>
+        </div>
+        <div data-page-node-id="M5sWLoUoKV2iB5xgDZTBwC" class="evidence-grid">
+          <div data-page-node-id="vgAX0beCTZR0dn0lqplNK4" class="card evidence-card known reveal">
+            <h3 data-page-node-id="B7rAfDCa6qfnDFxTGnxsAc">已公开的可核验证据</h3>
+            <ul data-page-node-id="Zdpz6KCCcKT1kIy4FnBoIb">
+              <li data-page-node-id="IEXkGzQAKCUbowaG33kTos">六电机、四电池包、三余度飞控、双套作动系统设计<sup data-page-node-id="buLSWQHysx2N9LB0TMhaz6"><a data-page-node-id="Yg7OfZ0qC2LxMJYhbYvzCI" href="#src-1">[1]</a></sup><sup data-page-node-id="pm8YGmWEgkwhS39HC9ASAB"><a data-page-node-id="yrYqlvkWzGJrS1kFhucGnF" href="#src-2">[2]</a></sup>。</li>
+              <li data-page-node-id="HyGdYSQGd3I9loiOvd0ZPj">50,000+ 英里累计试飞（官方）；2,000+ 小时（第三方报道）<sup data-page-node-id="8eSg7lItxtAyYpv0pb8HQS"><a data-page-node-id="hD8OF6BG4isGCC5t722G9v" href="#src-6">[6]</a></sup><sup data-page-node-id="koICHNQnU4WOwf6NDiBoGM"><a data-page-node-id="bfZzGfpnaVUozginmKdmfr" href="#src-7">[7]</a></sup>。</li>
+              <li data-page-node-id="aN4z9B6tHiqDe9DjM4ecIU">FAA 五阶段完成度：第 4 阶段 100%/100%，第 5 阶段 20%/10%<sup data-page-node-id="jQ3XNoeFEidKojsG5WBW5R"><a data-page-node-id="mLTQ20SvwxRCiS2i12XPI9" href="#src-3">[3]</a></sup>。</li>
+              <li data-page-node-id="Lla2Ig4hfbAhPbXtdl7AyK">Part 135 承运人证书、eIPP 11 州试点与得州演示<sup data-page-node-id="pqqPfQy6yF0caJ4JiVA1Nh"><a data-page-node-id="sDbfHQkyeqOLbi3WZXIzs0" href="#src-5">[5]</a></sup><sup data-page-node-id="OURn9JzemGW8M9rHKlj4nB"><a data-page-node-id="fGp2KRYBZnSpustevFbTbQ" href="#src-11">[11]</a></sup>。</li>
+              <li data-page-node-id="fAMPK1GEtxpvzqsNzgIa3k">45 dBA 巡航噪声（官网标称）；四电池包故障隔离设计<sup data-page-node-id="O3UI1p08IjQpJv1FRjiDUM"><a data-page-node-id="oQ9E2jy7Rzq8BajQnZx0G6" href="#src-1">[1]</a></sup>。</li>
+            </ul>
+          </div>
+          <div data-page-node-id="2t3TwdijIUyEs7mmDSYvWd" class="card evidence-card unknown reveal">
+            <h3 data-page-node-id="tnB46YUY0ncVKE9fmCCyEk">未公开 / 仍需验证的证据</h3>
+            <ul data-page-node-id="jVOS1dWc05iOW77dcujfKW">
+              <li data-page-node-id="Ezb09jWK7Ie7AkaU4ntFRZ">整机失效概率分配、PSSA/SSA 报告与 10⁻⁹ 目标的符合性映射。</li>
+              <li data-page-node-id="ANyAlHg1iy3rwqw6EndjQO">倾转机构共因失效、单电机失效后 Fail-Safe 的定量验证数据。</li>
+              <li data-page-node-id="LLdqJ8WcHG9V4M1tlNaBtZ">电池热失控预警阈值、起火概率与适航符合性试验细节。</li>
+              <li data-page-node-id="qBQTc0RHOmgUAl4RmsBTHv">高密度城市运行的地面第三方风险与坠撞概率定量结果。</li>
+              <li data-page-node-id="Iiu4gXrLMZRjT6zyf2lkRx">飞行员型别等级、培训大纲与应急程序的具体内容；网络/电磁防护细节。</li>
+            </ul>
+          </div>
+        </div>
+        <div data-page-node-id="IsQEhLeWTJfSFCw4VMxsqt" class="rec-grid">
+          <article data-page-node-id="g46GBQLYxxPgFGlFAaPCua" class="card rec reveal"><div data-page-node-id="qnz5mhazkU8CdcGMTcR7il" class="rn">REC 01</div><h4 data-page-node-id="mFPvQp0BnjjbEL1RROYb4z">公开安全论据摘要</h4><p data-page-node-id="LzbyAB1Yyj90Ka2jZnq03r">建议按 GSN 结构公开顶层安全目标、主要论据与证据索引，区分型号设计安全与运行安全，避免用进度百分比替代安全结论。</p></article>
+          <article data-page-node-id="4aS9DgwGCdGScI92nyEcfH" class="card rec reveal"><div data-page-node-id="rvRTHdNa3G0yIEFEoWACHo" class="rn">REC 02</div><h4 data-page-node-id="fg6Ll0Q05dnqUN9CpNMizD">聚焦共因失效</h4><p data-page-node-id="varBUKry6ubgg9EDahgL67">重点说明六电机/四电池包在倾转、供电与软件共因失效下的独立性，以及 2oo3 类架构的切换判据与实测数据。</p></article>
+          <article data-page-node-id="6taEHOimswAi3lwzOWTKby" class="card rec reveal"><div data-page-node-id="ic3Gh3xSYBlFJDLJ9VoxBA" class="rn">REC 03</div><h4 data-page-node-id="jUkzXCV1t5VocMWOjXomfs">运行数据闭环</h4><p data-page-node-id="MfzOHYQnrdueA5AnoWycKI">利用 eIPP 与迪拜试点建立事件/征候数据回流机制，定期发布安全绩效指标，支撑持续适航与规则制定。</p></article>
+          <article data-page-node-id="CB5kqhhacBOVLgfMnuHmc8" class="card rec reveal"><div data-page-node-id="acjwrkciXSkJdidofDEdBj" class="rn">REC 04</div><h4 data-page-node-id="l5EPfBAM3ESbgba5qc5CjF">飞行员培训透明化</h4><p data-page-node-id="pPSlakk4rrAKibzB38nTkr">公开型别等级、过渡段训练时长与应急程序框架，回应有人驾驶路线对人力与培训体系的依赖。</p></article>
+          <article data-page-node-id="T6NxMHNGT93JCa3jbYY0hb" class="card rec reveal"><div data-page-node-id="5cjA6MAYk0OccYIsq0o9DP" class="rn">REC 05</div><h4 data-page-node-id="x4MgtsjSPHz823qRZz7jQw">城市第三方风险</h4><p data-page-node-id="jcjPBjtwzHMJkBRiIk0D5J">结合垂直起降场选址与周边人口密度，给出坠撞概率与人员暴露的定量评估，支撑社区接受度。</p></article>
+          <article data-page-node-id="8oQgUlAGhqdZk0WAVytDWV" class="card rec reveal"><div data-page-node-id="JgAOtmKSNZdGB6TFrEQDDM" class="rn">REC 06</div><h4 data-page-node-id="eDt2ryZ2FCXPZqLYPsXJjk">信息安全与电磁兼容</h4><p data-page-node-id="Hv39YBZC92IRVkC4rGkPQI">按课程要求补充飞控链路、地面站与 App 的网络安全防护与 EMC 验证证据。</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section data-page-node-id="yHaL4UxafNjuoaEC0lx0wU" id="verdict">
+      <div data-page-node-id="1wb8noHOt2WEo3gGuaLbNW" class="wrap">
+        <div data-page-node-id="jZ8uja1Fv1twKuDBfCjC9r" class="card verdict-block reveal">
+          <div data-page-node-id="Im1RqyyX5OrEwRrK6KPbZ4" class="eyebrow">08 / SAFETY VERDICT</div>
+          <h2 data-page-node-id="OmS6y65UVPoDWh6FIwNw3p">综合研判：设计安全证据较强，<br data-page-node-id="KRmLdERNRith6PYGIAOS7U">运行安全论证仍在建立</h2>
+          <p data-page-node-id="pmYTsALRKhhWrX3N7zJuHy">Joby S4 以有人驾驶 + 动力升力专用条件 + 全冗余架构，选择了监管确定性较高的安全路径；试飞量与 FAA 阶段进度在同行中领先。但型号合格证尚未颁发、倾转与电池共因失效等定量证据未公开，且有人驾驶培训与城市第三方风险尚未闭合。综合判断：限定试点场景下的安全论据较充分，尚不足以推导“高密度城市通勤已安全”。</p>
+          <div data-page-node-id="OFcWkdpsbyuGlrYGb605Dx" class="score-grid">
+            <div data-page-node-id="oSVwYj4442ionMBMahMoQ3" class="score"><div data-page-node-id="3RmrF8J17TGwwLM1CxGGvf" class="head"><span data-page-node-id="CeFGIfJR9vqduoodGWnVkd">设计冗余</span><b data-page-node-id="8eoRdsMDsdrKcXmBIQ6MVC">9/10</b></div><div data-page-node-id="n5Bp7TMosVWg85PK2nV1Tr" class="bar"><i data-page-node-id="ftYrDDsf4nSXWEQnLS6snJ" style="width:90%"></i></div></div>
+            <div data-page-node-id="C8Fm0293eJQK6FNyiAqXjo" class="score"><div data-page-node-id="opDWvPPrtYGdbCrRMPGU2L" class="head"><span data-page-node-id="egCu8Medko4TeSwmqEpWeD">符合性验证</span><b data-page-node-id="WeaM5j4Kj8cqDJFJchuVeS">8/10</b></div><div data-page-node-id="a3CteCTvBj5AUAnYw5QWb5" class="bar"><i data-page-node-id="YVbpKS9LDt7vgbYtupONvE" style="width:80%"></i></div></div>
+            <div data-page-node-id="J7byKXjb4BVftkW9bX9VVc" class="score"><div data-page-node-id="4g1HIwpIyH65a3KjgHD73c" class="head"><span data-page-node-id="goZkCzzNBats0VlYe21al7">运行控制</span><b data-page-node-id="HQMZZDLDYUGyDXcwCvGeE5">7/10</b></div><div data-page-node-id="6wKK5CHTMHtSVv1LBSKR9d" class="bar"><i data-page-node-id="mtEezvBBgeRMMO9mXyMJIR" style="width:70%"></i></div></div>
+            <div data-page-node-id="lrJt861CmvVtsD33k9TqbZ" class="score"><div data-page-node-id="bl4b4JBmOLwSuQQrwfTSNu" class="head"><span data-page-node-id="LbbpArsL7alUU92Gr6OKGu">公开证据完整性</span><b data-page-node-id="HSCj7qCf72sc6c6pCbHkVx">6/10</b></div><div data-page-node-id="emj1HepCyLKCFTvJ05hD8o" class="bar"><i data-page-node-id="xFCP9gO9018NoZcA9KOhzB" style="width:60%"></i></div></div>
+          </div>
+          <p data-page-node-id="5cdz79TuYBaOlxZT4xOMCx" style="margin-top:22px;font-size:12px;color:#a9c0dd">注：评分为基于公开资料与课程分析框架的主观研判，非 Joby、FAA 或任何机构的官方结论。</p>
+        </div>
+      </div>
+    </section>
+
+    <section data-page-node-id="GZe8QBNhD7KApgLyqHI8yP" id="sources" class="sources">
+      <div data-page-node-id="lKEPabXuEEaPNEhVHCufGJ" class="wrap">
+        <div data-page-node-id="ciKmp1dNj2bpcfcsT41v2n" class="section-head reveal">
+          <div data-page-node-id="QUoYlvXSSnjF3DPso65Uih" class="section-no">09 / DATA SOURCES</div>
+          <h2 data-page-node-id="0JGVBC0hXCexuZFZww487D">数据来源与口径说明</h2>
+          <p data-page-node-id="hA0UJZOTuTmcE2msL4zqWB">本页所有数字均来自公开可核验资料，并区分官方来源与第三方报道。课程资料页码对应《第四章-飞行汽车的现状及展望》与《第五章-飞行汽车产业分析及支撑技术》。</p>
+        </div>
+        <ul data-page-node-id="BD4DOpSfKRfKL8UIIAzkT4" class="source-list">
+          <li data-page-node-id="DZ67cmogzxYyhTpG1z4j2M"><a data-page-node-id="gK6yYbQ5p8dgv8iS2ZDdB3" id="src-1" href="https://jobyaviation.com/aircraft" target="_blank" rel="noopener">Joby Aviation 官方 Aircraft 页面：5 座、200 mph、45 dBA、六电机、四电池包、三余度飞控、零运营排放。</a></li>
+          <li data-page-node-id="1pDdnz70RgxE5ZLUGAunm9"><a data-page-node-id="LtUZ0tJXqIDugwe5HgBLS4" id="src-2" href="https://jobyaviation.com/technology" target="_blank" rel="noopener">Joby Aviation 官方 Technology 页面：六台双绕组电机、四个独立电池包与故障隔离、三余度飞控、双套关键作动、Whirly Bird 试验台、NASA 风洞与垂直整合制造。</a></li>
+          <li data-page-node-id="fzpn5Js80XRbMjxORliCbc"><a data-page-node-id="qJHEZsmu1m2Ku6W64CRqK2" id="src-3" href="https://ir.jobyaviation.com/sec-filings/all-sec-filings/content/0001819848-26-000432/joby-8kx20260805xexx99_2.htm" target="_blank" rel="noopener">Joby 2026 Q2 股东信（2026-08-05）：FAA 五阶段完成度（截至 2026-07-31，第 4 阶段 100%/100%、第 5 阶段 20%/10%）、5 架在飞 12 架在产、首架 FAA 符合性飞机、eIPP 11 州与财务数据。</a></li>
+          <li data-page-node-id="ggkWbmVPeD5jo1twdBMMAM"><a data-page-node-id="8FcChPENASxuFNdB2LJBeN" id="src-4" href="https://ir.jobyaviation.com/sec-filings/all-sec-filings/content/0001819848-26-000432/joby-8kx20260805xexx99_1.htm" target="_blank" rel="noopener">Joby 2026 Q2 财报新闻稿：首个 eIPP 飞行预计 9 月在得州、2026 年首批乘客目标与全年营收指引。</a></li>
+          <li data-page-node-id="KabrFbHOTefQSqoYMtO0Bv"><a data-page-node-id="MCKEV6JKyXN83bMYJcbl2V" id="src-5" href="https://www.ventureatlas.org/company/joby-aviation" target="_blank" rel="noopener">Venture Atlas Joby 公司档案：2022 年取得 FAA Part 135 航空承运人证书、2017 原型机首飞、2020 收购 Uber Elevate 等历程。</a></li>
+          <li data-page-node-id="AUC72FjTmqf9OcO3rqZjNA"><a data-page-node-id="IejaMgDW2qgCQ9NC6qNSSa" id="src-6" href="https://www.jobyaviation.com/news/get-ready-for-takeoff-with-uber-and-joby" target="_blank" rel="noopener">Joby / Uber 2026-02-25 官方新闻：持证商业飞行员驾驶、100 英里航程、累计试飞超 50,000 英里、迪拜首批乘客目标与多城市扩展计划。</a></li>
+          <li data-page-node-id="BFIFnbwlC9rd6YVxXNz0Ac"><a data-page-node-id="wzmBe0lJUD2rGBMHbLMPFb" id="src-7" href="https://radiohangar.com/blog/posts/the-joby-aviation-s4-the-two-thousand-hour-electric-air-taxi-and-what-stage-four-faa-certification" target="_blank" rel="noopener">Radio Hangar 第三方报道（2026-11-18）：累计试飞超 2,000 小时、单电机失效后其余五台工作、FAA 专用条件覆盖倾转机构/分布式电推进/Fail-Safe 逻辑/电池可靠性、45 dBA@500 ft、型别等级与培训缺口。该来源为第三方，部分数字（如 150 英里航程、Stage 4 表述）与官方口径不同，本页仅采用其安全相关描述并标注。</a></li>
+          <li data-page-node-id="UfVPyksGR8fCN2F9xpEGrT" id="src-8">课程资料《第五章-飞行汽车产业分析及支撑技术》：适航级载人运行体系挑战——可靠性 10⁻⁹、安全与失效模式、冗余设计、三重冗余体系（飞控/能源/通信）、技术同源但体系不等价。</li>
+          <li data-page-node-id="uX31fVQvkP90FzP4sEpKPb" id="src-9">课程资料《第五章》：新能源汽车三电技术同源度约 70%、无人机飞控/航电经验迁移率约 20%—30%，需按航空适航体系系统级重构。</li>
+          <li data-page-node-id="xS5b2mizKRudffcYiOD91u"><a data-page-node-id="jGkMznDHbZFqt7ABEeUGBQ" id="src-10" href="https://faa.gov/air-taxis/FAQ" target="_blank" rel="noopener">FAA 动力升力与 Part 194 SFAR FAQ：动力升力类别定义、SFAR No. 120 临时规则有效期 10 年、允许的运行类型、飞行员证书与型别等级要求。</a></li>
+          <li data-page-node-id="iqBnmjS1nCyoQ57DMmATfF"><a data-page-node-id="cgAbJHIl8G53RV4udcE3co" id="src-11" href="https://faa.gov/newsroom/trumps-transportation-secretary-sean-p-duffy-celebrates-launch-federal-evtol-pilot-program" target="_blank" rel="noopener">FAA 新闻（2026）：eIPP 得州启动，Joby S4 在 Perot Field Fort Worth Alliance Airport 演示并飞往 DFW 往返；8 个项目覆盖 26 州；试点数据用于 FAA 制定规则。</a></li>
+          <li data-page-node-id="cEWJRl2GJrRe4cHGQZxCM3" id="src-12">课程资料《第五章》第 81 页：安全相关标准法规及最佳实践——SAE ARP4754A、ARP4761、DO-178、DO-254、MIL-STD-882E、ISO 26262、ISO 21448、ISO/SAE 21434。</li>
+          <li data-page-node-id="GGGeY7B7oDVE8kyRUPuqBN" id="src-13">课程资料《第四章-飞行汽车的现状及展望》第 37—38 页：商业运行最重要挑战是安全问题，含飞行器安全、系统级安全（避撞、搜救、控制网络入侵）与环境安全；设计阶段考虑因素。</li>
+          <li data-page-node-id="BofiTSLC1gnoIZTFvIXUtS" id="src-14"></li>
+          <li data-page-node-id="2tWopdJnBDTsxkwbKxQ9zu" id="src-15">课程资料《第五章》第 80 页：智能运载工具安全系统工程基本过程 0—8（安全文化与安全管理、整机功能与场景定义、安全分析方法、系统安全架构、硬件/软件/机械化学安全设计、安全测试验证、运行安全论证）。</li>
+          <li data-page-node-id="f1AuAej1McFdIjYwrCoMEY" id="src-16">课程资料《第五章》第 84—87 页：V 模型实现方法、HARA/FHA/STPA/FMEA/FTA/CCA/PSSA/SSA、典型安全架构（1oo1/1oo2/2oo2/1oo3/2oo3/1oo2D）、流程与产品安全论证（GSN）及第 88 页作业要求。</li>
+        </ul>
+        <div data-page-node-id="PitLDhoPPekEHxiWR8Fpnr" class="disclaimer reveal">
+          <b data-page-node-id="ihS4t9sFRAaYfjgNYpK10v">口径与边界：</b>① FAA 五阶段完成度为 Joby 股东信披露口径，TC 尚未颁发；② 50,000+ 英里为官方口径，2,000+ 小时为第三方报道，二者不可直接换算；③ eIPP 与迪拜的首批载客属于试点运营，不等同于型号合格审定完成；④ 45 dBA、100/150 英里航程等为厂商或第三方标称值，非独立实测；⑤ 危险分级、5×5 矩阵与评分为课程分析框架下的主观研判，不代表官方结论。
+          <span data-page-node-id="XkzNkYniwnqui6p03YEbe8" style="color:var(--blue);font-weight:700"></span><a data-page-node-id="cDzjDhrVz1ZdYT9CCEL1jF" href="assignment1.html" style="color:var(--blue)"></a><a data-page-node-id="yU2Qrg6ocY93ov1XOATRfc" href="assignment2.html" style="color:var(--blue)"></a><a data-page-node-id="adbWHDJkdFXmj05msU88lp" href="assignment3.html" style="color:var(--blue)"></a><b data-page-node-id="5WNmpS1qtqnKdFyo8ABoBP"></b></div>
+      </div>
+    </section>
+  </main>
+
+  <footer data-page-node-id="osGJe3kLyLDvMcDEvumRA7">
+    <div data-page-node-id="41GFNoI2c1iwLPHetPzLck" class="wrap footer-inner">
+      <span data-page-node-id="FGgBDlPwUqipMkRVkTE9hB">Joby S4 深度安全分析 ｜ 飞行汽车技术基础 · 课程作业 2</span>
+      <span data-page-node-id="UkhfKeykQ1QU4gCdgEXTgQ">数据截至 2026-11-23 ｜ 所有引用均为公开来源</span>
+    </div>
+  </footer>
+
+  <div data-page-node-id="GLjXbxcHO43nzLJ9jhsPrL" class="top-btn" id="topBtn" title="返回顶部" aria-label="返回顶部">↑</div>
+
+  <script data-page-node-id="AtBrvMYTsQtxlHCMKltJ3n" data-pnid-children="MmDaXQVjbTauLKcieBqTiY">
+    (function () {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+      }, { threshold: 0.12 });
+      document.querySelectorAll('.reveal').forEach(function (el) { io.observe(el); });
+
+      var btn = document.getElementById('topBtn');
+      window.addEventListener('scroll', function () {
+        if (window.scrollY > 600) btn.classList.add('show'); else btn.classList.remove('show');
+      });
+      btn.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+    })();
+  </script>
+
+
+</body></html>
